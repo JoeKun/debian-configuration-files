@@ -1,0 +1,230 @@
+# /etc/zsh/zshrc
+# 
+# Configuration file for zsh
+# 
+# Originally taken from files available at 
+# http://formation-debian.via.ecp.fr/fichiers-config.tar.gz
+# which are part of the "Formation Debian GNU/Linux".
+# 
+# Modified by Joel Lopes Da Silva to fit Mac OS X Snow Leopard environment.
+
+#-----------------------------------------------------------
+# 1. Aliases
+#-----------------------------------------------------------
+
+# `ls` customization: color
+alias ls='ls --classify --tabsize=0 --literal --color=auto --show-control-chars --human-readable'
+
+# Prompt before erasing or overwriting a file
+alias cp='cp --interactive'
+alias mv='mv --interactive'
+alias rm='rm --interactive'
+
+# Aliases for `ls`
+alias ll='ls -l'
+alias la='ls -a'
+alias lla='ls -la'
+
+# Some handy aliases
+alias c='clear'
+alias less='less --quiet -M'
+alias s='cd ..'
+alias df='df --human-readable'
+alias du='du --human-readable'
+alias m='mutt -y'
+alias md='mkdir'
+alias rd='rmdir'
+alias screen='screen -U'
+
+
+#-----------------------------------------------------------
+# 2. Prompt key bindings
+#-----------------------------------------------------------
+
+# Mappings: key, function
+bindkey ''    beginning-of-line       # Home
+bindkey "\e[1~" beginning-of-line
+bindkey "\e[H"  beginning-of-line
+bindkey ''    end-of-line             # End
+bindkey "\e[4~" end-of-line
+bindkey "\e[F"  end-of-line
+bindkey ''    delete-char             # Del
+bindkey '[3~' delete-char
+bindkey '[2~' overwrite-mode          # Insert
+bindkey '[5~' history-search-backward # PgUp
+bindkey '[6~' history-search-forward  # PgDn
+
+# Color prompt (the color is not the same for root and for simple users)
+if [ "`id -u`" -eq 0 ]
+then
+  export PS1="%{[36;1m%}%T %{[34m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
+else
+  export PS1="%{[36;1m%}%T %{[31m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
+fi
+
+# Handling directional keys: [home], [end] and others
+typeset -A key
+
+key[Home]=${terminfo[khome]}
+key[End]=${terminfo[kend]}
+key[Insert]=${terminfo[kich1]}
+key[Delete]=${terminfo[kdch1]}
+key[Up]=${terminfo[kcuu1]}
+key[Down]=${terminfo[kcud1]}
+key[Left]=${terminfo[kcub1]}
+key[Right]=${terminfo[kcuf1]}
+key[PageUp]=${terminfo[kpp]}
+key[PageDown]=${terminfo[knp]}
+
+[[ -n "${key[Home]}"    ]]  && bindkey  "${key[Home]}"    beginning-of-line
+[[ -n "${key[End]}"     ]]  && bindkey  "${key[End]}"     end-of-line
+[[ -n "${key[Insert]}"  ]]  && bindkey  "${key[Insert]}"  overwrite-mode
+[[ -n "${key[Delete]}"  ]]  && bindkey  "${key[Delete]}"  delete-char
+[[ -n "${key[Up]}"      ]]  && bindkey  "${key[Up]}"      up-line-or-history
+[[ -n "${key[Down]}"    ]]  && bindkey  "${key[Down]}"    down-line-or-history
+[[ -n "${key[Left]}"    ]]  && bindkey  "${key[Left]}"    backward-char
+[[ -n "${key[Right]}"   ]]  && bindkey  "${key[Right]}"   forward-char
+
+# Title of xterm window
+case $TERM in
+   xterm*)
+       precmd () {print -Pn "\e]0;%n@%m: %~\a"}
+       ;;
+esac
+
+# Color management for `ls` (exporting LS_COLORS)
+if [ -x /usr/bin/dircolors ]
+then
+    if [ -r ~/.dir_colors ]
+    then
+        eval "`dircolors ~/.dir_colors`"
+    elif [ -r /etc/dir_colors ]
+    then
+        eval "`dircolors /etc/dir_colors`"
+    else
+        eval "`dircolors`"
+    fi
+fi
+
+
+#-----------------------------------------------------------
+# 3. `zsh` options
+#-----------------------------------------------------------
+
+# No beep
+unsetopt beep
+unsetopt hist_beep
+unsetopt list_beep
+# `>|` must be used to overwrite an existing file; the file will not be 
+# overwritten `>`
+unsetopt clobber
+# Ctrl+D is equivalent to `logout`
+unsetopt ignore_eof
+# Print the exit code if different from `0`
+setopt print_exit_value
+# Asks confirmation for `rm *`
+unsetopt rm_star_silent
+# Correcting commands orthography
+#setopt correct
+# Misc
+setopt nullglob
+
+
+# Auto-completion scheme
+
+# Scheme A
+# 1st tab: completes until the end of common part
+# 2nd tab: gives a list of choices
+# 3rd tab: completes with the 1st item of the list
+# 4th tab: completes with the 2nd item of the list
+# Default completion for `zsh`
+
+# Scheme B
+# 1st tab: gives a list of choices and completes with the 1st item 
+#          of the list
+# 2nd tab: completes with the 2nd item of the list, etc.
+# If you want to use this schemem uncomment the following line:
+#setopt menu_complete
+
+# Scheme C
+# 1st tab: completes until the end of the common part and
+#          gives a list of choices
+# 2nd tab: completes with the 1st item of the list
+# 3rd tab: completes with the 2nd item of the list, etc.
+# This is the best scheme for me!
+unsetopt list_ambiguous
+
+
+# Completion options
+setopt auto_remove_slash
+unsetopt glob_dots
+
+# Follow symbolic links
+setopt chase_links
+
+# When the user starts his command with `!` to make historical completion, 
+# don't execute the command immediately, but write it to the prompt
+setopt hist_verify
+# If the command is not valid but corresponds to the name of a sub-directory
+# execute `cd sub-directory`
+setopt auto_cd
+# Execution of `cd` puts the directory we come from in the stack
+setopt auto_pushd
+# Ignore dups in the stack
+setopt pushd_ignore_dups
+# Don't print the stack after a "pushd" or "popd"
+setopt pushd_silent
+# `pushd` without argument = `pushd $HOME`
+setopt pushd_to_home
+
+# Background jobs get a `nice 0`
+unsetopt bg_nice
+# Don't send `HUP` to jobs running when the shell exits
+unsetopt hup
+
+
+#-----------------------------------------------------------
+# 4. Commands history parameters
+#-----------------------------------------------------------
+
+# Number of rows in the history
+export HISTORY=1000
+export SAVEHIST=1000
+
+# File where the history is stored
+export HISTFILE=$HOME/.history
+
+# Append history to the end of the old file
+#setopt append_history
+
+# Each row is added in the history as it is typed
+setopt inc_append_history
+
+# Don't store a line in the history if it is identical to the previous one
+setopt hist_ignore_dups
+
+# Remove dups in the history file, keeping only the last added occurrence
+#setopt hist_ignore_all_dups
+
+# Remove dups in the history when it is full, but not before
+setopt hist_expire_dups_first
+
+# Don't store more than once a row, whatever setted options for current session
+#setopt hist_save_no_dups
+
+# History lookup with `zsh` command editor does not show a row more than
+# once, even if it has been stored
+setopt hist_find_no_dups
+
+
+#-----------------------------------------------------------
+# 5. Option commands completion
+#-----------------------------------------------------------
+
+zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}'
+zstyle ':completion:*' max-errors 3 numeric
+zstyle ':completion:*' use-compctl false
+
+autoload -U compinit
+compinit
+

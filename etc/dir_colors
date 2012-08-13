@@ -1,0 +1,113 @@
+# /etc/dir_colors
+# 
+# Configuration file for customizing colors used in the output of `ls`
+# 
+# Originally taken from files available at 
+# http://formation-debian.via.ecp.fr/fichiers-config.tar.gz
+# which are part of the "Formation Debian GNU/Linux".
+# 
+# Modified by Joel Lopes Da Silva.
+
+# Colors are defined as a list of numbers separated by semi-colons; 
+# there can only be one number per category.
+
+# There are 3 categories:
+#   - Type:
+#       00=normal 01=bold 04=underlined 05=blinking 
+#       07=inverted characters/background 08=invisible (?)
+#   - Color:
+#       30=black 31=red 32=green 33=yellow 34=blue 35=magenta 36=cyan 37=white
+#   - Background color:
+#       40=black 41=red 42=green 43=brown 44=blue 45=magenta 46=cyan 47=grey
+
+# Default global color
+NORMAL 00
+# Color for files
+FILE 00
+# Color for directories
+DIR 01;34
+# Color for symbolic links
+LINK 36
+# Color for FIFOs
+FIFO 33
+# Color for sockets
+SOCK 01;35
+# Color for block device drivers
+BLK 01;33
+# Color for character device drivers
+CHR 01;33
+# Color for executable files
+EXEC 01;31
+
+
+# Color for files based on their extension
+
+# Configuration files
+.conf 01;33
+# Executable files
+.sh   01;31
+.pl   01;31
+.php3 01;31
+.php  01;31
+# Compressed files
+.tar  36
+.tgz  36
+.txz  36
+.tbz  36
+.arj  36
+.taz  36
+.lzh  36
+.zip  36
+.gz   36
+.bz2  36
+.lzma 36
+.xz   36
+.rar  36
+# Packages
+.deb  33
+.rpm  33
+# Images
+.jpg  35
+.JPG  35
+.jpeg 35
+.eps  35
+.gif  35
+.png  35
+.bmp  35
+.xpm  35
+.tif  35
+.tiff 35
+.tga  35
+.pcx  35
+.jp2  35
+# Audio/video files
+.avi  32
+.mkv  32
+.mpg  32
+.mov  32
+.mpeg 32
+.vob  32
+.au   32
+.wav  32
+.mp3  32
+.ogg  32
+.ogm  32
+.ogv  32
+.flac 32
+.wmv  32
+.wma  32
+# Miscellaneous productivity documents
+.odg  33
+.odc  33
+.ods  33
+.odp  33
+.odd  33
+.doc  33
+.xls  33
+.ppt  33
+.pps  33
+.tex  33
+.pdf  33
+.ps   33
+.djvu 33
+

@@ -1,0 +1,19 @@
+# /etc/zsh/zlogin
+# 
+# Configuration file for zsh
+# 
+# Originally taken from files available at 
+# http://formation-debian.via.ecp.fr/fichiers-config.tar.gz
+# which are part of the "Formation Debian GNU/Linux".
+# 
+# Modified by Joel Lopes Da Silva.
+
+# This file contains commands executed when the user opens a Terminal
+
+# Prints information about the system
+uname -a
+uptime
+
+# Accept messages from other users
+mesg y
+
