@@ -1,0 +1,29 @@
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system>                                 <mount point>           <type>          <options>       <dump>  <pass>
+
+# Special system mountpoints
+proc                                            /proc                   proc            defaults        0       0
+sysfs                                           /sys                    sysfs           defaults        0       0
+tmpfs                                           /tmp                    tmpfs           defaults        0       0
+
+# Regular mountpoints
+UUID=28bd2330-4857-43c0-95af-0d1823e7a409       /      	                reiserfs        notail          0       1 # /dev/sda5
+UUID=3d2bc4ed-3760-49d6-a116-add971feac9e       /home                   reiserfs        notail          0       2 # /dev/server/home
+UUID=2eb62352-5470-4b11-960e-62d8068b0e38       /usr                    reiserfs        notail          0       2 # /dev/server/usr
+UUID=324ee170-a043-4f6e-8913-d7fe0ff4cad7       /var                    reiserfs        notail          0       2 # /dev/server/var
+UUID=ced0d005-e993-4792-a94f-0dfc1c24c64a       /var/log                reiserfs        notail          0       3 # /dev/server/log
+UUID=d8795d13-7d00-48aa-867b-3af4809807c3       /var/mail               reiserfs        notail          0       3 # /dev/server/mail
+UUID=4400600e-4821-41d7-8e0c-315070b37d12       /var/lib/groupwork      reiserfs        notail          0       3 # /dev/server/groupwork
+UUID=9ccbc3a1-bb32-4d1b-bfe7-d34e72589ab2       /var/lib/named          reiserfs        notail          0       3 # /dev/server/named
+
+# Swap
+UUID=20e2d7ec-e145-4d98-aa93-347a0359dbf9       none                    swap            sw              0       0 # /dev/sda6
+
+# Optical drive
+# /dev/scd0                                       /media/cdrom0           udf,iso9660     user,noauto     0       0
+
