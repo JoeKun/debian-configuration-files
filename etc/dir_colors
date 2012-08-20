@@ -20,35 +20,52 @@
 #   - Background color:
 #       40=black 41=red 42=green 43=brown 44=blue 45=magenta 46=cyan 47=grey
 
+
+#-----------------------------------------------------------
+# Default colors
+#-----------------------------------------------------------
+
 # Default global color
 NORMAL 00
+
 # Color for files
 FILE 00
+
 # Color for directories
 DIR 01;34
+
 # Color for symbolic links
 LINK 36
+
 # Color for FIFOs
 FIFO 33
+
 # Color for sockets
 SOCK 01;35
+
 # Color for block device drivers
 BLK 01;33
+
 # Color for character device drivers
 CHR 01;33
+
 # Color for executable files
 EXEC 01;31
 
 
+#-----------------------------------------------------------
 # Color for files based on their extension
+#-----------------------------------------------------------
 
 # Configuration files
 .conf 01;33
+
 # Executable files
 .sh   01;31
 .pl   01;31
 .php3 01;31
 .php  01;31
+
 # Compressed files
 .tar  36
 .tgz  36
@@ -63,9 +80,11 @@ EXEC 01;31
 .lzma 36
 .xz   36
 .rar  36
+
 # Packages
 .deb  33
 .rpm  33
+
 # Images
 .jpg  35
 .JPG  35
@@ -80,6 +99,7 @@ EXEC 01;31
 .tga  35
 .pcx  35
 .jp2  35
+
 # Audio/video files
 .avi  32
 .mkv  32
@@ -96,6 +116,7 @@ EXEC 01;31
 .flac 32
 .wmv  32
 .wma  32
+
 # Miscellaneous productivity documents
 .odg  33
 .odc  33

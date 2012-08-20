@@ -15,6 +15,7 @@ set vb
 
 " Enable syntaxic coloring
 syntax on
+
 " Defines the color scheme used
 " The available color schemes are the files with the extension .vim
 " in the directory /usr/share/vim/vimcurrent/colors/
@@ -22,8 +23,10 @@ colorscheme delek
 
 " Prints the cursor position 'row,column'
 set ruler
+
 " Display a status bar at the bottom of the screen
 set laststatus=2
+
 " Status bar content
 set statusline=%<%f%h%m%r%=%l,%c\ %P
 
@@ -34,34 +37,47 @@ set textwidth=0
 
 " Wrap to 72 characters per line with the symbol '#'
 map # gwap
+
 " Wrap and justify to 72 characters per line with the symbol '@'
 map @ {v}! par 72j
 
 " Don't be compatible with the old Vi
 set nocompatible
+
 " Number of columns (useless, or even disturbing)
 "set columns=80
+
 " Number of rows in the history
 set history=50
+
 " ~/.vimimfo file options
 set viminfo='20,\"50
+
 " Enable the Backspace keystroke
 set backspace=2
+
 " Allows navigating from a row to another with left and right keystrokes
 set whichwrap=<,>,[,]
+
 " Always keep a visible line on the screen above the cursor
 set scrolloff=1
+
 " Display the commands in the status bar
 set showcmd
+
 " Display the parentheses pair
 set showmatch
+
 " Try to keep the cursor in the same column when changing row
 set nostartofline
+
 " Automatic completion option
 set wildmode=list:full
+
 " By default, don't keep the indentation of the previous line
 " when starting a new line
 set noautoindent
+
 " Indentation options for a C file
 set cinoptions=(0
 
@@ -84,11 +100,13 @@ set ignorecase
 
 " Folding is based on indentation
 set foldmethod=indent
+
 " 12 levels of indentation for folding by default
 set foldlevel=12
 
 " Incremental searches: search as you type
 set incsearch
+
 " Highlight search term
 "set hlsearch
 

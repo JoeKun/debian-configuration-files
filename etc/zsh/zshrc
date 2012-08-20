@@ -9,7 +9,7 @@
 # Modified by Joel Lopes Da Silva to fit Mac OS X Snow Leopard environment.
 
 #-----------------------------------------------------------
-# 1. Aliases
+# Aliases
 #-----------------------------------------------------------
 
 # `ls` customization: color
@@ -38,7 +38,7 @@ alias screen='screen -U'
 
 
 #-----------------------------------------------------------
-# 2. Prompt key bindings
+# Prompt key bindings
 #-----------------------------------------------------------
 
 # Mappings: key, function
@@ -108,24 +108,30 @@ fi
 
 
 #-----------------------------------------------------------
-# 3. `zsh` options
+# `zsh` options
 #-----------------------------------------------------------
 
 # No beep
 unsetopt beep
 unsetopt hist_beep
 unsetopt list_beep
+
 # `>|` must be used to overwrite an existing file; the file will not be 
 # overwritten `>`
 unsetopt clobber
+
 # Ctrl+D is equivalent to `logout`
 unsetopt ignore_eof
+
 # Print the exit code if different from `0`
 setopt print_exit_value
+
 # Asks confirmation for `rm *`
 unsetopt rm_star_silent
+
 # Correcting commands orthography
 #setopt correct
+
 # Misc
 setopt nullglob
 
@@ -165,26 +171,32 @@ setopt chase_links
 # When the user starts his command with `!` to make historical completion, 
 # don't execute the command immediately, but write it to the prompt
 setopt hist_verify
+
 # If the command is not valid but corresponds to the name of a sub-directory
 # execute `cd sub-directory`
 setopt auto_cd
+
 # Execution of `cd` puts the directory we come from in the stack
 setopt auto_pushd
+
 # Ignore dups in the stack
 setopt pushd_ignore_dups
+
 # Don't print the stack after a "pushd" or "popd"
 setopt pushd_silent
+
 # `pushd` without argument = `pushd $HOME`
 setopt pushd_to_home
 
 # Background jobs get a `nice 0`
 unsetopt bg_nice
+
 # Don't send `HUP` to jobs running when the shell exits
 unsetopt hup
 
 
 #-----------------------------------------------------------
-# 4. Commands history parameters
+# Commands history parameters
 #-----------------------------------------------------------
 
 # Number of rows in the history
@@ -218,7 +230,7 @@ setopt hist_find_no_dups
 
 
 #-----------------------------------------------------------
-# 5. Option commands completion
+# Option commands completion
 #-----------------------------------------------------------
 
 zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}'
