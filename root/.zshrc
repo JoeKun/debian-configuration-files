@@ -41,6 +41,9 @@ done
 # Lines automatically added by some programs
 #-----------------------------------------------------------
 
+# Load RVM into a shell session *as a function*
+[[ -s "/usr/local/rvm/scripts/rvm" ]] && source "/usr/local/rvm/scripts/rvm"
+
 # Lines configured by zsh-newuser-install
 
 HISTSIZE=1000
