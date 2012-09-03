@@ -1,0 +1,114 @@
+// /etc/bind/named.conf.options: General options for BIND9
+
+options {
+
+	// Working directory of the server
+	directory "/var/cache/bind";
+
+	// Dump file
+	dump-file "dump/named_dump.db";
+
+	// If there is a firewall between you and nameservers you want
+	// to talk to, you may need to fix the firewall to allow multiple
+	// ports to talk. See http://www.kb.cert.org/vuls/id/800113
+
+	// If your ISP provided one or more IP addresses for stable 
+	// nameservers, you probably want to use them as forwarders. 
+	// Uncomment the following block, and insert the addresses replacing 
+	// the all-0's placeholder.
+
+	// forwarders {
+	// 	0.0.0.0;
+	// };
+
+	// Conform to RFC1035
+	auth-nxdomain no;
+
+
+	// By default, queries are not allowed to anyone except myself.
+	// This is mostly useful for zones which this server is not 
+	// authoritative for.
+	// For zones for which this server is an authoritative Name 
+	// Server, we have to override this directive by putting an 
+	// "allow-query" section within the "zone" section.
+	allow-query {
+		myself;
+	};
+
+	// Recursive requests must be done only by myself
+	// If "recursion" is set to "no", then DNS resolution for zones
+	// for which the server is not an authoritative Name Server may
+	// fail.
+	recursion yes;
+	allow-recursion {
+		myself;
+	};
+
+	// By default, zones cannot be transferred to anyone.
+	// This is mostly useful for zones for which this server is a
+	// slave Name Server.
+	// For zones for which this server is a master Name
+	// Server, we have to override this directive by putting an
+	// "allow-transfer" section within the "zone" section.
+	allow-transfer {
+		none;
+	};
+
+	// By default, zone changes will be notified.
+	// This is mostly useful for zones for which this server is a
+	// master Name Server.
+	// For zones for which this server is a slave Name Server, we
+	// have to override this directive by putting a "notify no;"
+	// within the "zone" section.
+	notify yes;
+
+	// Don't show the version of BIND9 used here.
+	version "";
+
+	// IPv6 support
+	listen-on-v6 {
+		any;
+	};
+	match-mapped-addresses yes;
+
+};
+
+
+// To have logs in /var/log/named.log rather than in syslog.
+// They also go to syslog for people who want it.
+// To avoid strange logs of some things we are not responsible for.
+logging {
+
+	channel default_out {
+		file "/var/log/named.log" versions 7 size 100m;
+		print-time yes;
+		print-category yes;
+	};
+
+	category default {
+		default_out;
+		default_syslog;
+	};
+
+	category config {
+		default_out;
+		default_syslog;
+	};
+
+	category xfer-in {
+		default_out;
+		default_syslog;
+	};
+
+	category xfer-out {
+		default_out;
+		default_syslog;
+	};
+
+
+	category lame-servers {
+		null;
+	};
+
+};
+
