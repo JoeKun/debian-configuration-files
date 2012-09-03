@@ -26,6 +26,11 @@ deb http://ftp.us.debian.org/debian/ squeeze-updates main contrib non-free
 deb-src http://ftp.us.debian.org/debian/ squeeze-updates main contrib non-free
 
 
+#-----------------------------------------------------------
+# Multimedia
+#-----------------------------------------------------------
 
+# For afpfs-ng-utils
 deb http://www.deb-multimedia.org squeeze main non-free
 deb http://www.deb-multimedia.org squeeze-backports main
+
