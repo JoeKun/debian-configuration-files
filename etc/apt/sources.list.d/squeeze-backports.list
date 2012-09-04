@@ -1,2 +1,1 @@
-# For postgresql-9.1
 deb http://backports.debian.org/debian-backports squeeze-backports main contrib non-free
