@@ -1,3 +1,0 @@
-Package: postgresql postgresql-common postgresql-client-common libpq5
-Pin: release a=squeeze-backports
-Pin-Priority: 510

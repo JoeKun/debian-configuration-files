@@ -1,3 +1,0 @@
-Package: *
-Pin: release a=squeeze-backports
-Pin-Priority: 90
