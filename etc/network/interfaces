@@ -8,8 +8,8 @@ auto lo0
 iface lo0 inet loopback
 
 # The primary network interface
-auto bge0
-iface bge0 inet static
+auto eth0
+iface eth0 inet static
         address 10.0.0.100
         netmask 255.255.255.0
         network 10.0.0.0

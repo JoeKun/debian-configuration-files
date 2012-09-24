@@ -1,0 +1,5 @@
+# /etc/network/persistent-network-interface-naming
+
+# Ethernet port in the back of the Mac mini
+eth0: 3c:07:54:4b:ab:12
+

@@ -1,0 +1,219 @@
+#! /bin/sh
+# 
+# /etc/init.d/persistent-network-interface-naming
+# 
+# Created by Joel Lopes Da Silva on 9/23/12.
+# Copyright © 2012 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+#----------------------------------------------------------------------
+# Documentation
+#----------------------------------------------------------------------
+
+# To install:
+# 
+#   # cp /path/to/persistent-network-interface-naming /etc/init.d
+#   # echo "eth0: <interface hardware address as seen in `dmesg -a`>" > \
+#             /etc/network/persistent-network-interface-naming
+#   # insserv --dryrun persistent-network-interface-naming
+#   # insserv --verbose persistent-network-interface-naming
+#   # /etc/init.d/persistent-network-interface-naming start
+# 
+# To uninstall:
+# 
+#   # /etc/init.d/persistent-network-interface-naming stop
+#   # insserv --dryrun --remove persistent-network-interface-naming
+#   # insserv --verbose --remove persistent-network-interface-naming
+#   # rm -f /etc/{init.d,network}/persistent-network-interface-naming
+
+# This script conforms to the LSB specification.
+# Cf. http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+
+
+#----------------------------------------------------------------------
+# LSB information
+#----------------------------------------------------------------------
+
+### BEGIN INIT INFO
+# Provides:          persistent-network-interface-naming
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:      0 6
+# X-Start-Before:    networking
+# X-Stop-After:      networking
+# Short-Description: Persistent network interface naming.
+# Description:       Service that assigns persistent network interface 
+#                    names to network interfaces based on their hardware 
+#                    addresses. This was made for Debian GNU/kFreeBSD 
+#                    as a replacement of the Linux/udev facility 
+#                    provided by /etc/udev/rules.d/70-persistent-net.rules.
+### END INIT INFO
+
+# Define LSB log_* functions.
+. /lib/lsb/init-functions
+
+
+#----------------------------------------------------------------------
+# Service description
+#----------------------------------------------------------------------
+
+SERVICE_NAME="`echo $0 | sed 's/.*\/\([^\/]*\)/\1/'`"
+CONFIGURATION_FILE_PATH="/etc/network/$SERVICE_NAME"
+STATE_FILE_DIRECTORY_PATH="/run/$SERVICE_NAME"
+STATE_FILE_PATH="$STATE_FILE_DIRECTORY_PATH/state"
+HUMAN_READABLE_SERVICE_NAME=`echo "$SERVICE_NAME" | sed "s/-/ /g"`
+
+
+#----------------------------------------------------------------------
+# String processing routines
+#----------------------------------------------------------------------
+
+echo_left_side_of_first_colon() {
+    echo "$1" | sed "s/^\([^:]*\):.*/\1/"
+}
+
+echo_right_side_of_first_colon() {
+    echo "$1" | sed "s/^[^:]*://"
+}
+
+echo_first_letter_capitalized() {
+    echo "$1" | sed "s/^./\U&/"
+}
+
+echo_normalized() {
+    echo "$1" | sed "s/\s//g"
+}
+
+cat_normalized_without_comments() {
+    cat "$1" | sed "s/\s//g" | sed "s/^\([^#]*\)#.*$/\1/g" | grep -v "^$"
+}
+
+
+#----------------------------------------------------------------------
+# Utility functions
+#----------------------------------------------------------------------
+
+do_start() {
+    result=0
+    if [ -r "$STATE_FILE_PATH" ]
+    then
+        log_warning_msg "already active."
+    else
+        if [ -r "$CONFIGURATION_FILE_PATH" ]
+        then
+            cat_normalized_without_comments "$CONFIGURATION_FILE_PATH" | \
+            while read line
+            do
+                desired_network_interface_name=`echo_left_side_of_first_colon "$line"`
+                hardware_address=`echo_right_side_of_first_colon "$line"`
+                search_pattern_for_system_message=`echo_normalized "Ethernet address: $hardware_address"`
+                system_messages="`dmesg -a`"
+                actual_network_interface_name=`echo_normalized "$system_messages" | grep -i $search_pattern_for_system_message | sed -n '$p'`
+                actual_network_interface_name=`echo_left_side_of_first_colon "$actual_network_interface_name"`
+                if [ "x$actual_network_interface_name" != "x" ]
+                then
+                    mkdir -p "$STATE_FILE_DIRECTORY_PATH"
+                    touch "$STATE_FILE_PATH"
+                    echo "$desired_network_interface_name: $actual_network_interface_name" >> "$STATE_FILE_PATH"
+                    ifconfig "$actual_network_interface_name" name "$desired_network_interface_name"
+                fi
+            done
+        else
+            log_failure_msg "missing configuration file; expected at: $CONFIGURATION_FILE_PATH"
+            result=1
+        fi
+    fi
+    return $result
+}
+
+do_stop() {
+    if [ -d "$STATE_FILE_DIRECTORY_PATH" ]
+    then
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            cat_normalized_without_comments "$STATE_FILE_PATH" | \
+            while read line
+            do
+                desired_network_interface_name=`echo_left_side_of_first_colon "$line"`
+                actual_network_interface_name=`echo_right_side_of_first_colon "$line"`
+                ifconfig "$desired_network_interface_name" name "$actual_network_interface_name"
+            done
+        else
+            log_warning_msg "already inactive."
+        fi
+        rm -R -f "$STATE_FILE_DIRECTORY_PATH"
+    else
+        log_warning_msg "already inactive."
+    fi
+    return 0
+}
+
+print_usage() {
+    echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+}
+
+
+#----------------------------------------------------------------------
+# Parse command line options and perform requested work
+#----------------------------------------------------------------------
+
+result=0
+case "$1" in
+    start)
+	log_action_begin_msg "Assigning $HUMAN_READABLE_SERVICE_NAME"
+        do_start
+        result=$?
+	log_action_end_msg $result
+        ;;
+    stop)
+	log_action_begin_msg "Reverting $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+	log_action_end_msg $result
+        ;;
+    restart|force-reload)
+	log_action_begin_msg "Reassigning $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+        if [ $result -eq 0 ]
+        then
+            do_start
+            result=$?
+        fi
+	log_action_end_msg $result
+        ;;
+    status)
+        human_readable_service_name=`echo_first_letter_capitalized "$HUMAN_READABLE_SERVICE_NAME"`
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            log_success_msg "$human_readable_service_name is active"
+        else
+            log_failure_msg "$human_readable_service_name is inactive."
+            result=3 # service is not running
+        fi
+        ;;
+    reload|try-restart)
+        print_usage
+        result=3 # unimplemented feature
+        ;;
+    *)
+        print_usage
+        result=2 # invalid or excess arguments
+        ;;
+esac
+
+exit $result 
+
