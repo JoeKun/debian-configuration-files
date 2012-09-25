@@ -1,0 +1,14 @@
+diff -ru /etc/init.d-orig/devd /etc/init.d/devd
+--- /etc/init.d-orig/devd	2012-09-25 00:35:30.750722000 -0700
++++ /etc/init.d/devd	2012-09-25 00:36:44.434872439 -0700
+@@ -1,9 +1,8 @@
+ #!/bin/sh
+ ### BEGIN INIT INFO
+ # Provides:		devd
+-# Required-Start:	$local_fs kldutils
++# Required-Start:	$local_fs kldutils networking
+ # Required-Stop:	$local_fs
+-# X-Start-Before:	networking
+ # Default-Start:	S
+ # Default-Stop:		0 1 6
+ # Short-Description:	device state change daemon

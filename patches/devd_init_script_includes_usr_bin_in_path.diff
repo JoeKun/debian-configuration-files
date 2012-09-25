@@ -1,0 +1,12 @@
+diff -ru /etc/init.d-orig/devd /etc/init.d/devd
+--- /etc/init.d-orig/devd	2012-09-25 00:01:34.189319000 -0700
++++ /etc/init.d/devd	2012-09-25 00:24:49.868676922 -0700
+@@ -9,7 +9,7 @@
+ # Short-Description:	device state change daemon
+ ### END INIT INFO
+ 
+-PATH=/sbin:/bin
++PATH=/sbin:/bin:/usr/sbin:/usr/bin
+ DESC="device state change daemon"
+ NAME=devd
+ DAEMON=/sbin/devd

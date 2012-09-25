@@ -1,0 +1,11 @@
+diff -ru /etc/init.d-orig/zfs /etc/init.d/zfs
+--- /etc/init.d-orig/zfs	2012-09-24 16:56:37.332258000 -0700
++++ /etc/init.d/zfs	2012-09-25 00:03:27.290487005 -0700
+@@ -5,6 +5,7 @@
+ # Required-Stop:
+ # Default-Start:     S
+ # Default-Stop:      0 6
++# X-Start-Before:    mountall
+ # Short-Description: Start/stop ZFS subsystem.
+ # Description:
+ ### END INIT INFO

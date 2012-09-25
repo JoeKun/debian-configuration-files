@@ -1,0 +1,24 @@
+diff -ru /etc/init.d-orig/mtab.sh /etc/init.d/mtab.sh
+--- /etc/init.d-orig/mtab.sh	2012-05-24 15:39:27.000000000 -0700
++++ /etc/init.d/mtab.sh	2012-09-25 00:57:45.552991564 -0700
+@@ -36,12 +36,18 @@
+ 	# Add entries for mounts created in early boot
+ 	# S01mountkernfs.sh
+ 	/etc/init.d/mountkernfs.sh mtab
+-	/etc/init.d/mountkernfs.sh reload
++	if [ "$KERNEL" != "GNU/kFreeBSD" ]
++	then
++		/etc/init.d/mountkernfs.sh reload
++	fi
+ 	# S03udev
+ 	domount mtab tmpfs "" /dev "udev" "-omode=0755"
+ 	# S03mountdevsubfs.sh
+ 	/etc/init.d/mountdevsubfs.sh mtab
+-	/etc/init.d/mountdevsubfs.sh reload
++	if [ "$KERNEL" != "GNU/kFreeBSD" ]
++	then
++		/etc/init.d/mountdevsubfs.sh reload
++	fi
+ 
+ 	# Add everything else in /proc/mounts into /etc/mtab, with
+ 	# special exceptions.
