@@ -1,0 +1,35 @@
+#! /bin/sh
+# 
+# dmesg_current
+# 
+# Created by Joel Lopes Da Silva on 9/24/12.
+# Copyright © 2012 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+# dmesg_current: prints the part of the output of `dmesg -a` that 
+#                corresponds to messages that occurred since the last 
+#                boot.
+# 
+# Requires a system running a FreeBSD kernel (tested on FreeBSD 9.0).
+
+FIRST_LINE_PATTERN="Copyright .*1992-[0-9]* The FreeBSD Project."
+
+output=`dmesg -a`
+lines_count=`echo "$output" | wc -l`
+first_line=`echo "$output" | grep -n -e "$FIRST_LINE_PATTERN" | tail -n 1`
+first_line_index=`echo "$first_line" | sed "s/^\([0-9]*\):.*$/\1/"`
+
+echo "$output" | tail -n $((lines_count - first_line_index + 1))
+
