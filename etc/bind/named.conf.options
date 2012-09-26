@@ -8,6 +8,9 @@ options {
 	// Dump file
 	dump-file "dump/named_dump.db";
 
+	// Managed keys
+	managed-keys-directory "managed-keys";
+
 	// If there is a firewall between you and nameservers you want
 	// to talk to, you may need to fix the firewall to allow multiple
 	// ports to talk. See http://www.kb.cert.org/vuls/id/800113
@@ -24,6 +27,9 @@ options {
 	// Conform to RFC1035
 	auth-nxdomain no;
 
+	// If BIND logs error messages about the root key being expired,
+	// you will need to update your keys. See https://www.isc.org/bind-keys
+	dnssec-validation auto;
 
 	// By default, queries are not allowed to anyone except myself.
 	// This is mostly useful for zones which this server is not 

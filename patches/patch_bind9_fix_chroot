@@ -1,0 +1,6 @@
+#! /bin/sh
+
+diff_file_path=`echo $0 | sed "s/patch_\([^\/]*\)$/\1.diff/"`
+
+patch $@ -p0 -i "$diff_file_path"
+

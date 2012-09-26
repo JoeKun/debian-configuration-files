@@ -1,0 +1,168 @@
+diff -ru /etc/init.d-orig/bind9 /etc/init.d/bind9
+--- /etc/init.d-orig/bind9	2012-09-25 23:14:45.269489000 -0700
++++ /etc/init.d/bind9	2012-09-26 00:29:58.608749026 -0700
+@@ -15,17 +15,27 @@
+ 
+ PATH=/sbin:/bin:/usr/sbin:/usr/bin
+ 
+-# for a chrooted server: "-u bind -t /var/lib/named"
++# for a chrooted server: "/var/lib/named"
+ # Don't modify this line, change or create /etc/default/bind9.
++NAMEDROOT=""
+ OPTIONS=""
+ RESOLVCONF=no
+ 
+ test -f /etc/default/bind9 && . /etc/default/bind9
+ 
++# chroot support
++if [ "x$NAMEDROOT" != "x/" ] && [ "x$NAMEDROOT" != "x" ]
++then
++    OPTIONS="$OPTIONS -t $NAMEDROOT"
++else
++    NAMEDROOT=""
++fi
++
+ test -x /usr/sbin/rndc || exit 0
+ 
+ . /lib/lsb/init-functions
+-PIDFILE=/var/run/named/named.pid
++RUNDIR="$NAMEDROOT/run/named"
++PIDFILE="$RUNDIR/named.pid"
+ 
+ check_network() {
+     if [ -x /usr/bin/uname ] && [ "X$(/usr/bin/uname -o)" = XSolaris ]; then
+@@ -44,23 +54,38 @@
+     start)
+ 	log_daemon_msg "Starting domain name service..." "bind9"
+ 
++	if pidofproc -p ${PIDFILE} /usr/sbin/named >/dev/null; then
++	    log_progress_msg "already running"
++	    log_end_msg 0
++            exit 0
++	fi
++
+ 	modprobe capability >/dev/null 2>&1 || true
+ 
+-	# dirs under /var/run can go away on reboots.
+-	mkdir -p /var/run/named
+-	chmod 775 /var/run/named
+-	chown root:bind /var/run/named >/dev/null 2>&1 || true
++	mkdir -p "$RUNDIR"
++	chmod 775 "$RUNDIR"
++	chown root:bind "$RUNDIR" >/dev/null 2>&1 || true
+ 
+ 	if [ ! -x /usr/sbin/named ]; then
+-	    log_action_msg "named binary missing - not starting"
++	    log_progress_msg "named binary missing - not starting"
+ 	    log_end_msg 1
+ 	fi
+ 
+ 	if ! check_network; then
+-	    log_action_msg "no networks configured"
++	    log_progress_msg "no networks configured"
+ 	    log_end_msg 1
+ 	fi
+ 
++	# Copy to chroot any openssl libraries
++	# See http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=668952 
++	if [ -n "$NAMEDROOT" ]; then
++	    find /usr/lib -type d -name openssl-1.0.0 | \
++	    while read line; do
++	        mkdir -p "`dirname ${NAMEDROOT}${line}`"
++	        cp -a "$line" "${NAMEDROOT}${line}"
++	    done
++	fi
++
+ 	if start-stop-daemon --start --oknodo --quiet --exec /usr/sbin/named \
+ 		--pidfile ${PIDFILE} -- $OPTIONS; then
+ 	    if [ "X$RESOLVCONF" != "Xno" ] && [ -x /sbin/resolvconf ] ; then
+@@ -75,14 +100,14 @@
+     stop)
+ 	log_daemon_msg "Stopping domain name service..." "bind9"
+ 	if ! check_network; then
+-	    log_action_msg "no networks configured"
++	    log_progress_msg "no networks configured"
+ 	    log_end_msg 1
+ 	fi
+ 
+ 	if [ "X$RESOLVCONF" != "Xno" ] && [ -x /sbin/resolvconf ] ; then
+ 	    /sbin/resolvconf -d lo.named
+ 	fi
+-	pid=$(/usr/sbin/rndc stop -p | awk '/^pid:/ {print $2}') || true
++	pid=$(/usr/sbin/rndc stop -p 2> /dev/null | awk '/^pid:/ {print $2}') || true
+ 	if [ -z "$pid" ]; then		# no pid found, so either not running, or error
+ 	    pid=$(pgrep -f ^/usr/sbin/named) || true
+ 	    start-stop-daemon --stop --oknodo --quiet --exec /usr/sbin/named \
+@@ -93,27 +118,50 @@
+ 	    n=1
+ 	    while kill -$sig $pid 2>/dev/null; do
+ 		if [ $n -eq 1 ]; then
+-		    echo "waiting for pid $pid to die"
++		    log_progress_msg "waiting for pid $pid to die"
+ 		fi
+ 		if [ $n -eq 11 ]; then
+-		    echo "giving up on pid $pid with kill -0; trying -9"
++		    log_progress_msg "giving up on pid $pid with kill -0; trying -9"
+ 		    sig=9
+ 		fi
+ 		if [ $n -gt 20 ]; then
+-		    echo "giving up on pid $pid"
++		    log_progress_msg "giving up on pid $pid"
+ 		    break
+ 		fi
+ 		n=$(($n+1))
+ 		sleep 1
+ 	    done
+ 	fi
++	rm -R -f "$RUNDIR"
++
++	# Clean up from chroot any openssl libraries that were copied 
++	# when bind9 was started, while leaving any file or directory 
++	# that might have been added by the user.
++	if [ -n "$NAMEDROOT" ] && [ -d "$NAMEDROOT/usr/lib" ]; then
++	    find "$NAMEDROOT/usr/lib" -type d -name openssl-1.0.0 | \
++	    while read directory; do
++	        corresponding_system_directory=$(echo $directory | cut -c `echo "$NAMEDROOT" | wc -c`-)
++	        find "$corresponding_system_directory" | \
++	        while read line; do
++	            if [ ! -d "$line" ]; then
++	                removed_file="${NAMEDROOT}${line}"
++	                rm -f "$removed_file"
++	                empty_directory=$(find `dirname "$removed_file"` -maxdepth 0 -empty)
++	                if [ "x$empty_directory" != "x" ]; then
++	                    rmdir -p "$empty_directory" > /dev/null 2>&1 || true
++	                fi
++	            fi
++	        done
++	    done
++	fi
++
+ 	log_end_msg 0
+     ;;
+ 
+     reload|force-reload)
+ 	log_daemon_msg "Reloading domain name service..." "bind9"
+ 	if ! check_network; then
+-	    log_action_msg "no networks configured"
++	    log_progress_msg "no networks configured"
+ 	    log_end_msg 1
+ 	fi
+ 
+@@ -122,7 +170,7 @@
+ 
+     restart)
+ 	if ! check_network; then
+-	    log_action_msg "no networks configured"
++	    log_failure_msg "no networks configured"
+ 	    exit 1
+ 	fi
+ 
+@@ -137,7 +185,7 @@
+ 	;;
+ 
+     *)
+-	log_action_msg "Usage: /etc/init.d/bind9 {start|stop|reload|restart|force-reload|status}"
++	echo "Usage: /etc/init.d/bind9 {start|stop|reload|restart|force-reload|status}" >&2
+ 	exit 1
+     ;;
+ esac

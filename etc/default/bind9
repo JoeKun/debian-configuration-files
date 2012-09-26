@@ -1,5 +1,11 @@
 # run resolvconf?
-RESOLVCONF=yes
+RESOLVCONF=no
 
 # startup options for the server
-OPTIONS="-u bind -t /var/lib/named"
+OPTIONS="-u bind"
+
+# root for bind; leave empty for normal usage; use path to chroot 
+# directory to run bind in a chroot; for example, 
+# NAMEDROOT="/var/lib/named".
+NAMEDROOT="/var/named"
+
