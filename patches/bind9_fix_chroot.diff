@@ -1,6 +1,6 @@
 diff -ru /etc/init.d-orig/bind9 /etc/init.d/bind9
---- /etc/init.d-orig/bind9	2012-09-25 23:14:45.269489000 -0700
-+++ /etc/init.d/bind9	2012-09-26 00:29:58.608749026 -0700
+--- /etc/init.d-orig/bind9	2012-09-26 09:53:01.498489000 -0700
++++ /etc/init.d/bind9	2012-09-26 09:54:17.456491438 -0700
 @@ -15,17 +15,27 @@
  
  PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -26,7 +26,7 @@ diff -ru /etc/init.d-orig/bind9 /etc/init.d/bind9
  
  . /lib/lsb/init-functions
 -PIDFILE=/var/run/named/named.pid
-+RUNDIR="$NAMEDROOT/run/named"
++RUNDIR="$NAMEDROOT/var/run/named"
 +PIDFILE="$RUNDIR/named.pid"
  
  check_network() {
