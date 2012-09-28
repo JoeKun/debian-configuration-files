@@ -18,7 +18,7 @@
 # limitations under the License.
 # 
 
-# dmesg_current: prints the part of the output of `dmesg -a` that 
+# dmesg_current: prints the part of the output of `dmesg` that 
 #                corresponds to messages that occurred since the last 
 #                boot.
 # 
@@ -26,7 +26,7 @@
 
 FIRST_LINE_PATTERN="Copyright .*1992-[0-9]* The FreeBSD Project."
 
-output=`dmesg -a`
+output=`dmesg $@`
 lines_count=`echo "$output" | wc -l`
 first_line=`echo "$output" | grep -n -e "$FIRST_LINE_PATTERN" | tail -n 1`
 first_line_index=`echo "$first_line" | sed "s/^\([0-9]*\):.*$/\1/"`
