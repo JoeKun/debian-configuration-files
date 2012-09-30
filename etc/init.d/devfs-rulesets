@@ -45,7 +45,7 @@
 #----------------------------------------------------------------------
 
 ### BEGIN INIT INFO
-# Provides:          devfs-ruleset
+# Provides:          devfs-rulesets
 # Required-Start:    $local_fs
 # Required-Stop:     $local_fs
 # Default-Start:     S
@@ -55,6 +55,8 @@
 #                    devfs rulesets described in that configuration 
 #                    file. These rulesets are not assigned to any 
 #                    mountpoint by default. See devfs.rules(5).
+#                    This is meant to provide persistent devfs rulesets 
+#                    for Debian GNU/kFreeBSD systems.
 ### END INIT INFO
 
 # Define LSB log_* functions.
@@ -88,83 +90,89 @@ do_start() {
         mkdir -p "$STATE_FILE_DIRECTORY_PATH"
         touch "$STATE_FILE_PATH"
         
-        # Define local variables for the loop
-        current_ruleset_index=0
-        rules_in_current_ruleset=""
-        line_number=1
-        
-        # Read configuration file line by line
-        devfs_rules=`cat "$CONFIGURATION_FILE_PATH"`
-        devfs_rules="$devfs_rules\n[__dummy_for_internal_parsing__=9999]"
-        echo "$devfs_rules" | \
-        while read line
-        do
+        # Move forward if configuration file is present
+        if [ -r "$CONFIGURATION_FILE_PATH" ]
+        then
             
-            # Normalize line
-            normalized_line="$line"
-            normalized_line=`echo "$normalized_line" | sed "s/#.*$//g"`
-            normalized_line=`echo "$normalized_line" | sed "s/^\s*//g" | sed "s/\s*$//g"`
-            normalized_line=`echo "$normalized_line" | sed "s/\s\s*/ /g"`
-            normalized_line=`echo "$normalized_line" | sed "s/^\[\s*\([a-zA-Z0-9_]*\)\s*\(=*\)\s*\([0-9]*\)\s*\]$/[\1\2\3]/g"`
+            # Define local variables for the loop
+            current_ruleset_index=0
+            rules_in_current_ruleset=""
+            line_number=1
             
-            # Proceed if normalized_line is not empty
-            if [ -n "$normalized_line" ]
-            then
+            # Read configuration file line by line
+            devfs_rules=`cat "$CONFIGURATION_FILE_PATH"`
+            devfs_rules="$devfs_rules\n[__dummy_for_internal_parsing__=9999]"
+            echo "$devfs_rules" | \
+            while read line
+            do
                 
-                # Determine if the current line defines a new ruleset
-                characters_count=`echo "$normalized_line" | wc -c`
-                first_character=`echo "$normalized_line" | cut -c 1`
-                last_character=`echo "$normalized_line" | cut -c $((characters_count - 1))`
-                if [ "$first_character" = "[" ] && [ "$last_character" = "]" ]
+                # Normalize line
+                normalized_line="$line"
+                normalized_line=`echo "$normalized_line" | sed "s/#.*$//g"`
+                normalized_line=`echo "$normalized_line" | sed "s/^\s*//g" | sed "s/\s*$//g"`
+                normalized_line=`echo "$normalized_line" | sed "s/\s\s*/ /g"`
+                normalized_line=`echo "$normalized_line" | sed "s/^\[\s*\([a-zA-Z0-9_]*\)\s*\(=*\)\s*\([0-9]*\)\s*\]$/[\1\2\3]/g"`
+                
+                # Proceed if normalized_line is not empty
+                if [ -n "$normalized_line" ]
                 then
                     
-                    # Process current ruleset
-                    if [ $current_ruleset_index -gt 0 ] && [ -n "$rules_in_current_ruleset" ]
+                    # Determine if the current line defines a new ruleset
+                    characters_count=`echo "$normalized_line" | wc -c`
+                    first_character=`echo "$normalized_line" | cut -c 1`
+                    last_character=`echo "$normalized_line" | cut -c $((characters_count - 1))`
+                    if [ "$first_character" = "[" ] && [ "$last_character" = "]" ]
                     then
                         
-                        # Store index in state file
-                        echo "$current_ruleset_index" >> "$STATE_FILE_PATH"
+                        # Process current ruleset
+                        if [ $current_ruleset_index -gt 0 ] && [ -n "$rules_in_current_ruleset" ]
+                        then
+                            
+                            # Store index in state file
+                            echo "$current_ruleset_index" >> "$STATE_FILE_PATH"
+                            
+                            # Actually create ruleset
+                            devfs ruleset $current_ruleset_index
+                            devfs rule -s $current_ruleset_index delset
+                            echo "$rules_in_current_ruleset" | sed "s/^/devfs rule -s $current_ruleset_index /g" | sh
+                            devfs ruleset "$SYSTEM_RULESET_INDEX"
+                            
+                        fi
                         
-                        # Actually create ruleset
-                        devfs ruleset $current_ruleset_index
-                        devfs rule -s $current_ruleset_index delset
-                        echo "$rules_in_current_ruleset" | sed "s/^/devfs rule -s $current_ruleset_index /g" | sh
-                        devfs ruleset "$SYSTEM_RULESET_INDEX"
+                        # Prepare for new ruleset
+                        ruleset_declaration=`echo "$normalized_line" | cut -c 2-$((characters_count - 2))`
+                        ruleset_index=`echo "$ruleset_declaration" | sed "s/^[a-zA-Z0-9_]*=*//g"`
+                        if [ ! -n "$ruleset_index" ]
+                        then
+                            ruleset_index=`echo "$ruleset_declaration" | sed "s/[^0-9].*$//g"`
+                        fi
+                        current_ruleset_index=$ruleset_index
+                        rules_in_current_ruleset=""
+                        if [ ! -n "$current_ruleset_index" ]
+                        then
+                            log_failure_msg "Couldn't find ruleset index in line $line_number: \"$line\""
+                            result=1
+                            break
+                        fi
                         
-                    fi
-                    
-                    # Prepare for new ruleset
-                    ruleset_declaration=`echo "$normalized_line" | cut -c 2-$((characters_count - 2))`
-                    ruleset_index=`echo "$ruleset_declaration" | sed "s/^[a-zA-Z0-9_]*=*//g"`
-                    if [ ! -n "$ruleset_index" ]
-                    then
-                        ruleset_index=`echo "$ruleset_declaration" | sed "s/[^0-9].*$//g"`
-                    fi
-                    current_ruleset_index=$ruleset_index
-                    rules_in_current_ruleset=""
-                    if [ ! -n "$current_ruleset_index" ]
-                    then
-                        log_failure_msg "Couldn't find ruleset index in line $line_number: \"$line\""
-                        result=1
-                        break
-                    fi
-                    
-                else
-                    
-                    # Append to current ruleset
-                    if [ -n "$rules_in_current_ruleset" ]
-                    then
-                        rules_in_current_ruleset="$rules_in_current_ruleset\n$normalized_line"
                     else
-                        rules_in_current_ruleset="$normalized_line"
+                        
+                        # Append to current ruleset
+                        if [ -n "$rules_in_current_ruleset" ]
+                        then
+                            rules_in_current_ruleset="$rules_in_current_ruleset\n$normalized_line"
+                        else
+                            rules_in_current_ruleset="$normalized_line"
+                        fi
+                        
                     fi
                     
                 fi
+                line_number=$((line_number + 1))
                 
-            fi
-            line_number=$((line_number + 1))
+            done
             
-        done
+        fi
     fi
     return $result
 }
