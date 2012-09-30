@@ -1,0 +1,7 @@
+# /etc/devfs.rules
+
+[named_chroot=53]
+add hide
+add path null unhide
+add path random unhide
+

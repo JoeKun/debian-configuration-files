@@ -1,0 +1,246 @@
+#! /bin/sh
+# 
+# /etc/init.d/devfs-rulesets
+# 
+# Created by Joel Lopes Da Silva on 9/30/12.
+# Copyright © 2012 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+#----------------------------------------------------------------------
+# Documentation
+#----------------------------------------------------------------------
+
+# To install:
+# 
+#   # cp /path/to/devfs-rulesets /etc/init.d
+#   # insserv --dryrun devfs-rulesets
+#   # insserv --verbose devfs-rulesets
+#   # /etc/init.d/devfs-rulesets start
+# 
+# To uninstall:
+# 
+#   # /etc/init.d/devfs-rulesets stop
+#   # insserv --dryrun --remove devfs-rulesets
+#   # insserv --verbose --remove devfs-rulesets
+#   # rm -f /etc/init.d/devfs-rulesets
+
+# This script conforms to the LSB specification.
+# Cf. http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+
+
+#----------------------------------------------------------------------
+# LSB information
+#----------------------------------------------------------------------
+
+### BEGIN INIT INFO
+# Provides:          devfs-ruleset
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: devfs rulesets creation.
+# Description:       Service that reads /etc/devfs.rules and creates 
+#                    devfs rulesets described in that configuration 
+#                    file. These rulesets are not assigned to any 
+#                    mountpoint by default. See devfs.rules(5).
+### END INIT INFO
+
+# Define LSB log_* functions.
+. /lib/lsb/init-functions
+
+
+#----------------------------------------------------------------------
+# Service description
+#----------------------------------------------------------------------
+
+CONFIGURATION_FILE_PATH="/etc/devfs.rules"
+SYSTEM_RULESET_INDEX="1" # as defined in /etc/init.d/freebsd-utils
+SERVICE_NAME="`echo $0 | sed 's/.*\/\([^\/]*\)/\1/'`"
+STATE_FILE_DIRECTORY_PATH="/run/$SERVICE_NAME"
+STATE_FILE_PATH="$STATE_FILE_DIRECTORY_PATH/state"
+HUMAN_READABLE_SERVICE_NAME=`echo "$SERVICE_NAME" | sed "s/-/ /g"`
+
+
+#----------------------------------------------------------------------
+# Utility functions
+#----------------------------------------------------------------------
+
+do_start() {
+    result=0
+    if [ -r "$STATE_FILE_PATH" ]
+    then
+        log_warning_msg "already active."
+    else
+        
+        # Create state file
+        mkdir -p "$STATE_FILE_DIRECTORY_PATH"
+        touch "$STATE_FILE_PATH"
+        
+        # Define local variables for the loop
+        current_ruleset_index=0
+        rules_in_current_ruleset=""
+        line_number=1
+        
+        # Read configuration file line by line
+        devfs_rules=`cat "$CONFIGURATION_FILE_PATH"`
+        devfs_rules="$devfs_rules\n[__dummy_for_internal_parsing__=9999]"
+        echo "$devfs_rules" | \
+        while read line
+        do
+            
+            # Normalize line
+            normalized_line="$line"
+            normalized_line=`echo "$normalized_line" | sed "s/#.*$//g"`
+            normalized_line=`echo "$normalized_line" | sed "s/^\s*//g" | sed "s/\s*$//g"`
+            normalized_line=`echo "$normalized_line" | sed "s/\s\s*/ /g"`
+            normalized_line=`echo "$normalized_line" | sed "s/^\[\s*\([a-zA-Z0-9_]*\)\s*\(=*\)\s*\([0-9]*\)\s*\]$/[\1\2\3]/g"`
+            
+            # Proceed if normalized_line is not empty
+            if [ -n "$normalized_line" ]
+            then
+                
+                # Determine if the current line defines a new ruleset
+                characters_count=`echo "$normalized_line" | wc -c`
+                first_character=`echo "$normalized_line" | cut -c 1`
+                last_character=`echo "$normalized_line" | cut -c $((characters_count - 1))`
+                if [ "$first_character" = "[" ] && [ "$last_character" = "]" ]
+                then
+                    
+                    # Process current ruleset
+                    if [ $current_ruleset_index -gt 0 ] && [ -n "$rules_in_current_ruleset" ]
+                    then
+                        
+                        # Store index in state file
+                        echo "$current_ruleset_index" >> "$STATE_FILE_PATH"
+                        
+                        # Actually create ruleset
+                        devfs ruleset $current_ruleset_index
+                        devfs rule -s $current_ruleset_index delset
+                        echo "$rules_in_current_ruleset" | sed "s/^/devfs rule -s $current_ruleset_index /g" | sh
+                        devfs ruleset "$SYSTEM_RULESET_INDEX"
+                        
+                    fi
+                    
+                    # Prepare for new ruleset
+                    ruleset_declaration=`echo "$normalized_line" | cut -c 2-$((characters_count - 2))`
+                    ruleset_index=`echo "$ruleset_declaration" | sed "s/^[a-zA-Z0-9_]*=*//g"`
+                    if [ ! -n "$ruleset_index" ]
+                    then
+                        ruleset_index=`echo "$ruleset_declaration" | sed "s/[^0-9].*$//g"`
+                    fi
+                    current_ruleset_index=$ruleset_index
+                    rules_in_current_ruleset=""
+                    if [ ! -n "$current_ruleset_index" ]
+                    then
+                        log_failure_msg "Couldn't find ruleset index in line $line_number: \"$line\""
+                        result=1
+                        break
+                    fi
+                    
+                else
+                    
+                    # Append to current ruleset
+                    if [ -n "$rules_in_current_ruleset" ]
+                    then
+                        rules_in_current_ruleset="$rules_in_current_ruleset\n$normalized_line"
+                    else
+                        rules_in_current_ruleset="$normalized_line"
+                    fi
+                    
+                fi
+                
+            fi
+            line_number=$((line_number + 1))
+            
+        done
+    fi
+    return $result
+}
+
+do_stop() {
+    if [ -d "$STATE_FILE_DIRECTORY_PATH" ]
+    then
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            cat "$STATE_FILE_PATH" | \
+            while read line
+            do
+                devfs rule -s $line delset
+            done
+        else
+            log_warning_msg "already inactive."
+        fi
+        rm -R -f "$STATE_FILE_DIRECTORY_PATH"
+    else
+        log_warning_msg "already inactive."
+    fi
+    return 0
+}
+
+print_usage() {
+    echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+}
+
+
+#----------------------------------------------------------------------
+# Parse command line options and perform requested work
+#----------------------------------------------------------------------
+
+result=0
+case "$1" in
+    start)
+        log_action_begin_msg "Creating $HUMAN_READABLE_SERVICE_NAME"
+        do_start
+        result=$?
+        log_action_end_msg $result
+        ;;
+    stop)
+        log_action_begin_msg "Deleting $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+        log_action_end_msg $result
+        ;;
+    restart|force-reload)
+        log_action_begin_msg "Re-creating $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+        if [ $result -eq 0 ]
+        then
+            do_start
+            result=$?
+        fi
+        log_action_end_msg $result
+        ;;
+    status)
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            log_success_msg "$HUMAN_READABLE_SERVICE_NAME are active"
+        else
+            log_failure_msg "$HUMAN_READABLE_SERVICE_NAME are inactive."
+            result=3 # service is not running
+        fi
+        ;;
+    reload|try-restart)
+        print_usage
+        result=3 # unimplemented feature
+        ;;
+    *)
+        print_usage
+        result=2 # invalid or excess arguments
+        ;;
+esac
+
+exit $result 
+
