@@ -215,5 +215,5 @@ case "$1" in
         ;;
 esac
 
-exit $result 
+exit $result
 
