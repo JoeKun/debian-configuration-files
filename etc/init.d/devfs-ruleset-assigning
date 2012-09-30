@@ -1,0 +1,218 @@
+#! /bin/sh
+# 
+# /etc/init.d/devfs-ruleset-assigning
+# 
+# Created by Joel Lopes Da Silva on 9/30/12.
+# Copyright © 2012 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+#----------------------------------------------------------------------
+# Documentation
+#----------------------------------------------------------------------
+
+# To install:
+# 
+#   # cp /path/to/devfs-ruleset-assigning /etc/init.d
+#   # insserv --dryrun devfs-ruleset-assigning
+#   # insserv --verbose devfs-ruleset-assigning
+#   # /etc/init.d/devfs-ruleset-assigning start
+# 
+# To uninstall:
+# 
+#   # /etc/init.d/devfs-ruleset-assigning stop
+#   # insserv --dryrun --remove devfs-ruleset-assigning
+#   # insserv --verbose --remove devfs-ruleset-assigning
+#   # rm -f /etc/init.d/devfs-ruleset-assigning
+
+# This script conforms to the LSB specification.
+# Cf. http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+
+
+#----------------------------------------------------------------------
+# LSB information
+#----------------------------------------------------------------------
+
+### BEGIN INIT INFO
+# Provides:          devfs-ruleset-assigning
+# Required-Start:    $local_fs devfs-rulesets
+# Required-Stop:     $local_fs devfs-rulesets
+# Default-Start:     S
+# Default-Stop:      0 6
+# Short-Description: devfs ruleset assigning to mount points.
+# Description:       Service that reads /etc/devfs-ruleset-assigning
+#                    and mounts a devfs file system in each mount point
+#                    referenced as well as assigns a devfs ruleset to 
+#                    those mount points by looking them up by name in 
+#                    /etc/devfs.rules. This is meant to replace the 
+#                    key devfs_set_rulesets available on /etc/rc.conf 
+#                    on FreeBSD systems for Debian GNU/kFreeBSD.
+### END INIT INFO
+
+# Define LSB log_* functions.
+. /lib/lsb/init-functions
+
+
+#----------------------------------------------------------------------
+# Service description
+#----------------------------------------------------------------------
+
+SYSTEM_RULESET_INDEX="1" # as defined in /etc/init.d/freebsd-utils
+DEVFS_RULES_CONFIGURATION_FILE_PATH="/etc/devfs.rules"
+SERVICE_NAME="`echo $0 | sed 's/.*\/\([^\/]*\)/\1/'`"
+CONFIGURATION_FILE_PATH="/etc/$SERVICE_NAME.conf"
+STATE_FILE_DIRECTORY_PATH="/run/$SERVICE_NAME"
+STATE_FILE_PATH="$STATE_FILE_DIRECTORY_PATH/state"
+HUMAN_READABLE_SERVICE_NAME=`echo "$SERVICE_NAME" | sed "s/-/ /g"`
+
+
+#----------------------------------------------------------------------
+# Utility functions
+#----------------------------------------------------------------------
+
+do_start() {
+    result=0
+    if [ -r "$STATE_FILE_PATH" ]
+    then
+        log_warning_msg "already active."
+    else
+        if [ -r "$CONFIGURATION_FILE_PATH" ]
+        then
+            if [ -r "$DEVFS_RULES_CONFIGURATION_FILE_PATH" ]
+            then
+                
+                # Create state file
+                mkdir -p "$STATE_FILE_DIRECTORY_PATH"
+                touch "$STATE_FILE_PATH"
+                
+                # Read devfs rules configuration file
+                devfs_rules=`cat "$DEVFS_RULES_CONFIGURATION_FILE_PATH" | sed "s/#.*$//g"`
+                
+                # Read configuration file line by line
+                cat "$CONFIGURATION_FILE_PATH" | sed "s/#.*$//g" | sed "s/^[^\/]*//g" | egrep -v "^$" | \
+                while read line
+                do
+                    mount_point=`echo "$line" | sed "s/^\([^:]*\):.*$/\1/" | sed "s/\s*$//"`
+                    ruleset_name=`echo "$line" | sed "s/^.*:\s*\(\S*\)\s*$/\1/"`
+                    if [ -n "$mount_point" ] && [ -n "$ruleset_name" ]
+                    then
+                        ruleset_declaration_line=`echo "$devfs_rules" | egrep "^\s*\[\s*$ruleset_name\s*=\s*[0-9]*.*\]\s*" | sed -n '$p'`
+                        if [ -n "$ruleset_declaration_line" ]
+                        then
+                            ruleset_index=`echo "$ruleset_declaration_line" | sed "s/^.*=\s*\([0-9]*\)[^0-9].*$/\1/"`
+                            if [ -n "$ruleset_index" ] && [ $ruleset_index -gt 0 ]
+                            then
+                                
+                                # Store mount point in state file
+                                echo "$mount_point" >> "$STATE_FILE_PATH"
+                                
+                                # Actually mount devfs file system and assign ruleset
+                                mount -t devfs devfs "$mount_point"
+                                devfs -m "$mount_point" ruleset $ruleset_index
+                                devfs -m "$mount_point" rule applyset
+                                
+                            fi
+                        fi
+                    fi
+                done
+                
+            else
+                log_failure_msg "missing devfs rules configuration file; expected at: $DEVFS_RULES_CONFIGURATION_FILE_PATH"
+                result=1
+            fi
+        else
+            mkdir -p "$STATE_FILE_DIRECTORY_PATH"
+            touch "$STATE_FILE_PATH"
+        fi
+    fi
+    return $result
+}
+ 
+do_stop() {
+    if [ -d "$STATE_FILE_DIRECTORY_PATH" ]
+    then
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            cat "$STATE_FILE_PATH" | \
+            while read line
+            do
+                devfs -m "$line" ruleset $SYSTEM_RULESET_INDEX
+                devfs -m "$line" rule applyset
+                umount "$line"
+            done
+        else
+            log_warning_msg "already inactive."
+        fi
+        rm -R -f "$STATE_FILE_DIRECTORY_PATH"
+    else
+        log_warning_msg "already inactive."
+    fi
+    return 0
+}
+
+print_usage() {
+    echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+}
+
+
+#----------------------------------------------------------------------
+# Parse command line options and perform requested work
+#----------------------------------------------------------------------
+
+result=0
+case "$1" in
+    start)
+        log_action_begin_msg "Assigning devfs rulesets to mount points"
+        do_start
+        result=$?
+        log_action_end_msg $result
+        ;;
+    stop)
+        log_action_begin_msg "Reverting devfs rulesets on mount points"
+        do_stop
+        result=$?
+        log_action_end_msg $result
+        ;;
+    restart|force-reload)
+        log_action_begin_msg "Reassigning devfs rulesets"
+        do_stop
+        result=$?
+        if [ $result -eq 0 ]
+        then
+            do_start
+            result=$?
+        fi
+        log_action_end_msg $result
+        ;;
+    status)
+        if [ -r "$STATE_FILE_PATH" ]
+        then
+            log_success_msg "$HUMAN_READABLE_SERVICE_NAME is active"
+        else
+            log_failure_msg "$HUMAN_READABLE_SERVICE_NAME is inactive."
+            result=3 # service is not running
+        fi
+        ;;
+    reload|try-restart)
+        print_usage
+        result=3 # unimplemented feature
+        ;;
+    *)
+        print_usage
+        result=2 # invalid or excess arguments
+        ;;
+esac
+
+exit $result 
+
