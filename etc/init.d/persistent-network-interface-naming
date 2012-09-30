@@ -173,19 +173,19 @@ print_usage() {
 result=0
 case "$1" in
     start)
-	log_action_begin_msg "Assigning $HUMAN_READABLE_SERVICE_NAME"
+        log_action_begin_msg "Assigning $HUMAN_READABLE_SERVICE_NAME"
         do_start
         result=$?
-	log_action_end_msg $result
+        log_action_end_msg $result
         ;;
     stop)
-	log_action_begin_msg "Reverting $HUMAN_READABLE_SERVICE_NAME"
+        log_action_begin_msg "Reverting $HUMAN_READABLE_SERVICE_NAME"
         do_stop
         result=$?
-	log_action_end_msg $result
+        log_action_end_msg $result
         ;;
     restart|force-reload)
-	log_action_begin_msg "Reassigning $HUMAN_READABLE_SERVICE_NAME"
+        log_action_begin_msg "Reassigning $HUMAN_READABLE_SERVICE_NAME"
         do_stop
         result=$?
         if [ $result -eq 0 ]
@@ -193,7 +193,7 @@ case "$1" in
             do_start
             result=$?
         fi
-	log_action_end_msg $result
+        log_action_end_msg $result
         ;;
     status)
         human_readable_service_name=`echo_first_letter_capitalized "$HUMAN_READABLE_SERVICE_NAME"`
