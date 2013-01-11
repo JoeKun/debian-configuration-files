@@ -1,0 +1,8 @@
+# /etc/postfix/sql/virtual_alias/maps.cf
+
+user = postfix
+password = postfix_user_password
+hosts = localhost:5432
+dbname = mail
+query = SELECT concat_ws('/', '%d', '%u', 'mail', '') AS mail_directory FROM mailboxes INNER JOIN domains ON domains.domain = '%d' AND domains.active = true AND domains.mailboxes = true WHERE address = '%s' AND mailboxes.active = true
+

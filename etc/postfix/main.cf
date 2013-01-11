@@ -1,0 +1,224 @@
+# /etc/postfix/main.cf: Main configuration file for postfix
+# 
+# See /usr/share/postfix/main.cf.dist for a commented, more complete version
+
+#-----------------------------------------------------------
+# General options
+#-----------------------------------------------------------
+
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+biff = no
+
+
+#-----------------------------------------------------------
+# Domain management options
+#-----------------------------------------------------------
+
+# Hosname
+myhostname = orange.bobostuff.com
+
+# Domain name for outgoing emails
+myorigin = /etc/mailname
+
+# List of domains this server accepts email for
+mydestination = orange.bobostuff.com
+
+# List of domains this server accepts email for as long as proper 
+# aliases are defined
+virtual_alias_domains = proxy:pgsql:/etc/postfix/sql/virtual_alias/domains.cf
+
+# List of domains this server accepts email for and delivers it into 
+# local mailboxes without requiring any Unix account
+virtual_mailbox_domains = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/domains.cf
+
+# List of domains this server accepts email for and relays it to 
+# other mail servers
+# relay_domains = hey.tld
+
+
+#-----------------------------------------------------------
+# Aliases options
+#-----------------------------------------------------------
+
+# Aliases files
+alias_maps     = hash:/etc/aliases
+#                  hash:/var/lib/mailman/data/aliases
+alias_database = hash:/etc/aliases
+
+# Virtual aliases mapping
+virtual_alias_maps = proxy:pgsql:/etc/postfix/sql/virtual_alias/maps.cf
+
+# Virtual mailboxes mapping
+virtual_mailbox_maps = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/maps.cf
+
+# Relay domains mapping
+# transport_maps = hash:/etc/postfix/aliases/transport/hey.tld
+
+
+#-----------------------------------------------------------
+# Mailbox options
+#-----------------------------------------------------------
+
+# Command used to delicer mail for local delivery.
+mailbox_command = procmail -a "$EXTENSION"
+
+# No mailbox size limit for local delivery.
+mailbox_size_limit = 0
+
+# No mailbox size limit by default for virtual delivery.
+virtual_mailbox_limit = 0
+
+# Specific quotas for certain mailboxes for virtual delivery.
+virtual_mailbox_limit_maps = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/limit_maps.cf
+
+
+#-----------------------------------------------------------
+# Virtual delivery parameters
+#-----------------------------------------------------------
+
+# Minimum user ID value that the virtual delivery agent accepts
+virtual_minimum_uid = 100
+
+# Base path for all virtual mailboxes
+virtual_mailbox_base = /var/mail/virtual
+
+# User ID used by the virtual delivery agent
+virtual_uid_maps = static:114
+
+# Group ID used by the virtual delivery agent
+virtual_gid_maps = static:114
+
+
+#-----------------------------------------------------------
+# Network options
+#-----------------------------------------------------------
+
+# Trusted networks; only list localhost and the public IP address of 
+# this server so it won't become a spam relay.
+mynetworks = [::ffff:127.0.0.0]/104
+             [::1]/128
+             127.0.0.0/8
+             50.193.62.69/32
+
+# Network interface addresses that this mail system receives mail on
+inet_interfaces = all
+
+# If we ever need to use another server to relay outgoing mail
+relayhost = smtp.comcast.net
+# fallback_relay = 
+
+
+#-----------------------------------------------------------
+# TLS options
+#-----------------------------------------------------------
+
+# See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
+# information on enabling SSL in the smtp client.
+
+# For CAcert certificates
+#smtpd_tls_cert_file = /etc/ssl/bobostuff.com/bobostuff.com-cert.pem
+#smtpd_tls_key_file = /etc/ssl/bobostuff.com/bobostuff.com-key.pem
+#smtpd_tls_CAfile = /etc/ssl/cacert.org/cacert-class3.org
+
+smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_use_tls = yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+
+#-----------------------------------------------------------
+# Authentication over TLS
+#-----------------------------------------------------------
+
+# Enable SASL for SMTP authentication
+smtpd_sasl_auth_enable=yes
+
+# Allow SMTP clients that implement an obsolete version of the AUTH command
+broken_sasl_auth_clients = yes
+
+# Add authenticated user in received header
+smtpd_sasl_authenticated_header = yes
+
+# Authentication requires TLS
+smtpd_tls_auth_only=yes
+
+
+#-----------------------------------------------------------
+# Generic protection against spam and viruses
+#-----------------------------------------------------------
+
+# Prevents spammers from verifying whether an address exists.
+disable_vrfy_command = yes
+
+# Prevents spam to invalid addresses.
+local_recipient_maps = proxy:unix:passwd.byname $alias_maps
+
+# HELO/EHLO restrictions.
+smtpd_helo_restrictions = permit_mynetworks
+
+# Restrictions for sender address.
+smtpd_sender_restrictions = permit_mynetworks
+                            reject_non_fqdn_sender
+                            reject_unknown_sender_domain
+
+# Restrictions for recipient address.
+smtpd_recipient_restrictions = permit_mynetworks
+                               permit_sasl_authenticated
+                               reject_unauth_pipelining
+                               reject_unknown_recipient_domain
+                               reject_rbl_client zen.spamhaus.org
+                               permit_auth_destination
+                               reject
+
+#-----------------------------------------------------------
+# AMaViS configuration
+#-----------------------------------------------------------
+
+# Enables AMaViS filtering on port 10024.
+#content_filter = smtp-amavis:[127.0.0.1]:10024
+
+# Disabling address manipulations before filtering lets the filter see the
+# original address instead of the result of performing the virtual aliases
+# substitutions, and other sorts of mappings.
+#receive_override_options = no_address_mappings
+
+
+#-----------------------------------------------------------
+# Other options
+#-----------------------------------------------------------
+
+# Appending .domain is the MUA's job.
+append_dot_mydomain = no
+
+# Recipient delimiter
+recipient_delimiter = +
+
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+readme_directory = no
+
+# Needed to perform database requests behind a proxy.
+proxy_read_maps = $local_recipient_maps
+                  $mydestination
+                  $virtual_alias_maps
+                  $virtual_alias_domains
+                  $virtual_mailbox_maps
+                  $virtual_mailbox_domains
+                  $relay_recipient_maps
+                  $relay_domains
+                  $canonical_maps
+                  $sender_canonical_maps
+                  $recipient_canonical_maps
+                  $relocated_maps
+                  $transport_maps
+                  $mynetworks
+                  $virtual_mailbox_limit_maps
+
+# Maximum message size
+#message_size_limit = 51200000 # ~50 MB
+
+# Maximum lifetime of mails in the mail queue
+#bounce_queue_lifetime = 21d
+#maximal_queue_lifetime = 21d
+

@@ -1,0 +1,8 @@
+# /etc/postfix/sql/virtual_alias/domains.cf
+
+user = postfix
+password = postfix_user_password
+hosts = localhost:5432
+dbname = mail
+query = SELECT domain FROM domains WHERE domain = '%s' AND mailboxes = true AND active = true
+

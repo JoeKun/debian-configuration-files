@@ -1,0 +1,8 @@
+# /etc/postfix/sql/virtual_alias/maps.cf
+
+user = postfix
+password = postfix_user_password
+hosts = localhost:5432
+dbname = mail
+query = SELECT CASE WHEN (SELECT quota FROM mailboxes WHERE address = '%s') = 0 THEN (SELECT maxquota FROM domains WHERE domain = '%d') WHEN (SELECT maxquota FROM domains WHERE domain = '%d') = 0 THEN (SELECT quota FROM mailboxes WHERE address = '%s') ELSE LEAST((SELECT quota FROM mailboxes WHERE address = '%s'), (SELECT maxquota FROM domains WHERE domain = '%d')) END
+
