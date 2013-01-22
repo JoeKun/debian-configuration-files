@@ -7,7 +7,7 @@
 
 -- su - postgres
 -- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt mail
--- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt postfix
+-- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt dovecot
 -- createdb --owner=mail mail "Mail aliases and accounts information"
 -- psql
 -- GRANT ALL PRIVILEGES ON DATABASE mail TO mail;
@@ -51,10 +51,10 @@ CREATE TABLE mailboxes (
 );
 
 
--- GRANT CONNECT ON DATABASE mail TO postfix;
--- GRANT SELECT ON TABLE domains TO postfix;
--- GRANT SELECT ON TABLE aliases TO postfix;
--- GRANT SELECT ON TABLE mailboxes TO postfix;
+-- GRANT CONNECT ON DATABASE mail TO dovecot;
+-- GRANT SELECT ON TABLE domains TO dovecot;
+-- GRANT SELECT ON TABLE aliases TO dovecot;
+-- GRANT SELECT ON TABLE mailboxes TO dovecot;
 
 
 INSERT INTO domains (domain, aliases, mailboxes, maxquota) VALUES ('foo.com',          true, false, 0);

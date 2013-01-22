@@ -131,8 +131,14 @@ smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 # Authentication over TLS
 #-----------------------------------------------------------
 
+# Use Dovecot to authenticate.
+smtpd_sasl_type = dovecot
+
+# Referring to /var/spool/postfix/private/auth
+smtpd_sasl_path = private/auth
+
 # Enable SASL for SMTP authentication
-smtpd_sasl_auth_enable=yes
+smtpd_sasl_auth_enable = yes
 
 # Allow SMTP clients that implement an obsolete version of the AUTH command
 broken_sasl_auth_clients = yes
@@ -140,8 +146,11 @@ broken_sasl_auth_clients = yes
 # Add authenticated user in received header
 smtpd_sasl_authenticated_header = yes
 
+# Other security options
+smtpd_sasl_security_options = noanonymous
+
 # Authentication requires TLS
-smtpd_tls_auth_only=yes
+smtpd_tls_auth_only = yes
 
 
 #-----------------------------------------------------------
@@ -150,6 +159,9 @@ smtpd_tls_auth_only=yes
 
 # Prevents spammers from verifying whether an address exists.
 disable_vrfy_command = yes
+
+# Require HELO
+smtpd_helo_required = yes
 
 # Prevents spam to invalid addresses.
 local_recipient_maps = proxy:unix:passwd.byname $alias_maps
