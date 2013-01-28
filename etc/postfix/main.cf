@@ -59,7 +59,7 @@ virtual_mailbox_maps = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/maps.cf
 # Mailbox options
 #-----------------------------------------------------------
 
-# Command used to delicer mail for local delivery.
+# Command used to deliver mail for local delivery.
 mailbox_command = procmail -a "$EXTENSION"
 
 # No mailbox size limit for local delivery.
