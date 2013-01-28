@@ -1,4 +1,4 @@
-# /etc/postfix/sql/virtual_alias/maps.cf
+# /etc/postfix/sql/virtual_alias/limit_maps.cf
 
 user = postfix
 password = postfix_user_password
