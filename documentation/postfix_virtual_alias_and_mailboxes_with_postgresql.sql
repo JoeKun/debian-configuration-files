@@ -8,6 +8,7 @@
 -- su - postgres
 -- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt mail
 -- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt dovecot
+-- createuser --no-createdb --no-createrole --no-superuser --encrypted --pwprompt postfix
 -- createdb --owner=mail mail "Mail aliases and accounts information"
 -- psql
 -- GRANT ALL PRIVILEGES ON DATABASE mail TO mail;
@@ -53,8 +54,10 @@ CREATE TABLE mailboxes (
 
 -- GRANT CONNECT ON DATABASE mail TO dovecot;
 -- GRANT SELECT ON TABLE domains TO dovecot;
--- GRANT SELECT ON TABLE aliases TO dovecot;
 -- GRANT SELECT ON TABLE mailboxes TO dovecot;
+-- GRANT CONNECT ON DATABASE mail TO postfix;
+-- GRANT SELECT ON TABLE domains TO postfix;
+-- GRANT SELECT ON TABLE aliases TO postfix;
 
 
 INSERT INTO domains (domain, aliases, mailboxes, maxquota) VALUES ('foo.com',          true, false, 0);
@@ -88,21 +91,6 @@ UPDATE mailboxes SET active = false WHERE address = 'addr-2@foo.com';
 UPDATE mailboxes SET active = false WHERE address = 'addr-2@active.foo.com';
 UPDATE mailboxes SET active = false WHERE address = 'addr-2@disabled.foo.com';
 
-
--- select active virtual alias domain (tested: OK) /etc/postfix/sql/virtual_alias/domains.cf
--- SELECT domain FROM domains WHERE domain = '%s' AND mailboxes = false AND aliases = true AND active = true;
-
--- select active alias (tested: OK) /etc/postfix/sql/virtual_alias/maps.cf
--- SELECT destination FROM aliases INNER JOIN domains ON domain = '%d' WHERE source = '%s' AND aliases.active = true AND domains.active = true;
-
--- select active mailboxes domain (tested: OK) /etc/postfix/sql/virtual_mailbox/domains.cf
--- SELECT domain FROM domains WHERE domain = '%s' AND mailboxes = true AND active = true;
-
--- select mailbox quota (tested: OK) /etc/postfix/sql/virtual_mailbox/limit_maps.cf
--- SELECT CASE WHEN (SELECT quota FROM mailboxes WHERE address = '%s') = 0 THEN (SELECT maxquota FROM domains WHERE domain = '%d') WHEN (SELECT maxquota FROM domains WHERE domain = '%d') = 0 THEN (SELECT quota FROM mailboxes WHERE address = '%s') ELSE LEAST((SELECT quota FROM mailboxes WHERE address = '%s'), (SELECT maxquota FROM domains WHERE domain = '%d')) END;
-
--- select mailbox location (tested: OK) /etc/postfix/sql/virtual_mailbox/maps.cf
--- SELECT concat_ws('/', '%d', '%u', 'mail', '') AS mail_directory FROM mailboxes INNER JOIN domains ON domains.domain = '%d' AND domains.active = true AND domains.mailboxes = true WHERE address = '%s' AND mailboxes.active = true;
 
 -- groupadd --gid 114 virtual_mail
 -- adduser --system --home /var/mail/virtual --shell /bin/false --no-create-home --uid 114 --ingroup virtual_mail --disabled-password --disabled-login virtual_mail
