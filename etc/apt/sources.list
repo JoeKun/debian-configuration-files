@@ -19,9 +19,9 @@ deb-src http://security.debian.org/ wheezy/updates main contrib non-free
 
 
 #-----------------------------------------------------------
-# Volatile
+# Other updates
 #-----------------------------------------------------------
 
-# deb http://mirror.cc.columbia.edu/debian/ wheezy-proposed-updates main contrib non-free
-# deb-src http://mirror.cc.columbia.edu/debian/ wheezy-proposed-updates main contrib non-free
+deb http://mirror.cc.columbia.edu/debian/ wheezy-updates main contrib non-free
+deb-src http://mirror.cc.columbia.edu/debian/ wheezy-updates main contrib non-free
 
