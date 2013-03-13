@@ -48,45 +48,16 @@ alias_database = hash:/etc/aliases
 # Virtual aliases mapping
 virtual_alias_maps = proxy:pgsql:/etc/postfix/sql/virtual_alias/maps.cf
 
-# Virtual mailboxes mapping
-virtual_mailbox_maps = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/maps.cf
-
 # Relay domains mapping
 # transport_maps = hash:/etc/postfix/aliases/transport/hey.tld
-
-
-#-----------------------------------------------------------
-# Mailbox options
-#-----------------------------------------------------------
-
-# Command used to deliver mail for local delivery.
-mailbox_command = procmail -a "$EXTENSION"
-
-# No mailbox size limit for local delivery.
-mailbox_size_limit = 0
-
-# No mailbox size limit by default for virtual delivery.
-virtual_mailbox_limit = 0
-
-# Specific quotas for certain mailboxes for virtual delivery.
-virtual_mailbox_limit_maps = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/limit_maps.cf
 
 
 #-----------------------------------------------------------
 # Virtual delivery parameters
 #-----------------------------------------------------------
 
-# Minimum user ID value that the virtual delivery agent accepts
-virtual_minimum_uid = 100
-
-# Base path for all virtual mailboxes
-virtual_mailbox_base = /var/mail/virtual
-
-# User ID used by the virtual delivery agent
-virtual_uid_maps = static:114
-
-# Group ID used by the virtual delivery agent
-virtual_gid_maps = static:114
+# Delegate virtual mailbox delivery to dovecot
+virtual_transport = lmtp:unix:private/dovecot-lmtp
 
 
 #-----------------------------------------------------------
