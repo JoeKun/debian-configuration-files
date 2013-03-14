@@ -127,11 +127,14 @@ smtpd_tls_auth_only = yes
 # Generic protection against spam and viruses
 #-----------------------------------------------------------
 
+# Require HELO.
+smtpd_helo_required = yes
+
 # Prevents spammers from verifying whether an address exists.
 disable_vrfy_command = yes
 
-# Require HELO
-smtpd_helo_required = yes
+# Waste spammers time before rejecting them.
+smtpd_delay_reject = yes
 
 # Prevents spam to invalid addresses.
 local_recipient_maps = proxy:unix:passwd.byname $alias_maps
@@ -158,12 +161,12 @@ smtpd_recipient_restrictions = permit_mynetworks
 #-----------------------------------------------------------
 
 # Enables AMaViS filtering on port 10024.
-#content_filter = smtp-amavis:[127.0.0.1]:10024
+content_filter = smtp-amavis:[127.0.0.1]:10024
 
 # Disabling address manipulations before filtering lets the filter see the
 # original address instead of the result of performing the virtual aliases
 # substitutions, and other sorts of mappings.
-#receive_override_options = no_address_mappings
+receive_override_options = no_address_mappings
 
 
 #-----------------------------------------------------------
