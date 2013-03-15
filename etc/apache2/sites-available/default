@@ -3,32 +3,24 @@
 <VirtualHost *:80>
     
     # Basic configuration
-    ServerName mail.foo.com
     ServerAdmin admin@foo.com
-    DocumentRoot /usr/local/roundcube/current
+    DocumentRoot /var/www
     
     # Log configuration
-    <FilesMatch \.(jpg|gif|png)$>
-        SetEnvIfNoCase Referer "^http://mail.foo.com/" local_referer=1
-    </FilesMatch>
-    CustomLog ${APACHE_LOG_DIR}/foo.com/mail_access.log combined env=!local_referer
-    ErrorLog ${APACHE_LOG_DIR}/foo.com/mail_error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/error.log
     
 </VirtualHost>
 
 <VirtualHost *:443>
     
     # Basic configuration
-    ServerName mail.foo.com
     ServerAdmin admin@foo.com
-    DocumentRoot /usr/local/roundcube/current
+    DocumentRoot /var/www
     
     # Log configuration
-    <FilesMatch \.(jpg|gif|png)$>
-        SetEnvIfNoCase Referer "^https://mail.foo.com/" local_referer=1
-    </FilesMatch>
-    CustomLog ${APACHE_LOG_DIR}/foo.com/mail_access.log combined env=!local_referer
-    ErrorLog ${APACHE_LOG_DIR}/foo.com/mail_error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+    ErrorLog ${APACHE_LOG_DIR}/error.log
     
     # Enable SSL for this virtual host.
     SSLEngine on
