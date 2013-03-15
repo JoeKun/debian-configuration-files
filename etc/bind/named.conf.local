@@ -26,9 +26,9 @@ acl buddyns-transfer {
 // DNS Zones Configuration
 //-----------------------------------------------------------
 
-zone "bobostuff.com" {
+zone "foo.com" {
 	type master;
-	file "master/bobostuff.com.zone";
+	file "master/foo.com.zone";
 	allow-query {
 		any;
 	};
@@ -37,9 +37,9 @@ zone "bobostuff.com" {
 	};
 };
 
-zone "fujitakaroui.com" {
+zone "bar.com" {
 	type master;
-	file "master/fujitakaroui.com.zone";
+	file "master/bar.com.zone";
 	allow-query {
 		any;
 	};

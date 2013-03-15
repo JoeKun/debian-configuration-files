@@ -15,13 +15,13 @@ biff = no
 #-----------------------------------------------------------
 
 # Hosname
-myhostname = orange.bobostuff.com
+myhostname = server.foo.com
 
 # Domain name for outgoing emails
 myorigin = /etc/mailname
 
 # List of domains this server accepts email for
-mydestination = orange.bobostuff.com
+mydestination = server.foo.com
 
 # List of domains this server accepts email for as long as proper 
 # aliases are defined
@@ -86,8 +86,8 @@ relayhost = smtp.comcast.net
 # information on enabling SSL in the smtp client.
 
 # For CAcert certificates
-#smtpd_tls_cert_file = /etc/ssl/bobostuff.com/bobostuff.com-cert.pem
-#smtpd_tls_key_file = /etc/ssl/bobostuff.com/bobostuff.com-key.pem
+#smtpd_tls_cert_file = /etc/ssl/foo.com/foo.com-cert.pem
+#smtpd_tls_key_file = /etc/ssl/foo.com/foo.com-key.pem
 #smtpd_tls_CAfile = /etc/ssl/cacert.org/cacert-class3.org
 
 smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
