@@ -30,6 +30,29 @@
         php_flag track_vars On
     </Directory>
     
+    # phpMyAdmin
+    Alias /phpmyadmin /usr/share/phpmyadmin
+    <Directory /usr/share/phpmyadmin>
+        Options FollowSymLinks
+        DirectoryIndex index.php
+        AddType application/x-httpd-php .php
+        php_flag magic_quotes_gpc Off
+        php_flag track_vars On
+        php_flag register_globals Off
+        php_admin_flag allow_url_fopen Off
+        php_value include_path .
+        php_admin_value upload_tmp_dir /var/lib/phpmyadmin/tmp
+        php_admin_value open_basedir /usr/share/phpmyadmin/:/etc/phpmyadmin/:/var/lib/phpmyadmin/
+    </Directory>
+    <Directory /usr/share/phpmyadmin/libraries>
+        Order Deny,Allow
+        Deny from All
+    </Directory>
+    <Directory /usr/share/phpmyadmin/setup/lib>
+        Order Deny,Allow
+        Deny from All
+    </Directory>
+
     # doc-central
     Alias /dc /usr/share/doc-central/www
     Alias /doc /usr/share/doc
