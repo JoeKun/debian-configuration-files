@@ -1,0 +1,4 @@
+#! /bin/sh
+
+groupadd --gid $2 $1
+

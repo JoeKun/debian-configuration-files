@@ -1,0 +1,4 @@
+#! /bin/sh
+
+adduser --system --home /var/lib/$1 --shell /bin/false --no-create-home --uid $2 --ingroup nogroup --disabled-password --disabled-login $1
+
