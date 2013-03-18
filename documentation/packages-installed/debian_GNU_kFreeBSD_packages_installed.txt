@@ -1,0 +1,93 @@
+# List of interesting packages to install for a server running Debian GNU/kFreeBSD Wheezy
+#
+# Created by Joel Lopes Da Silva on 3/18/13.
+# Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+
+# General local tools
+aptitude install zsh vim par most screen        # general tools used for administration
+update-alternatives --config pager              # select most as the default pager
+aptitude install locate                         # for efficiently finding files accross the system
+updatedb                                        # initialize locate
+aptitude install htop                           # nice process monitoring utility
+aptitude install bzip2                          # useful for tar xvjf
+aptitude install colordiff                      # wrapper around diff to produce colorized output
+
+# General networking tools
+aptitude install curl                           # for compatibility with simple scripts written for OS X
+aptitude install openssh-client                 # need to be able to ssh out
+aptitude install bind9-host                     # for the command line tool host
+aptitude install telnet                         # for the command line tool telnet
+
+# General server tools
+aptitude install ntp                            # needed to have reliable time on a server
+aptitude install openssh-server                 # need to be able to ssh in
+
+# Shell customization
+aptitude install figlet fortune                 # for my shell login script
+
+# Ruby support (with AR+Sqlite3)
+aptitude install ruby
+aptitude install libsqlite3-dev
+
+# Developer tools
+aptitude install git                            # for the github.com/JoeKun/debian-configuration-files repository
+aptitude install libc0.1-dev                    # for rvm
+aptitude install make                           # for rvm
+aptitude install subversion                     # for rvm
+aptitude install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev autoconf ncurses-dev automake libtool bison pkg-config
+
+# Debian tools
+aptitude install reportbug                      # to file Debian bug reports
+
+# DNS server
+aptitude install bind9
+# devfs-rulesets
+# devfs-ruleset-assigning
+
+# PostgreSQL
+aptitude install postgresql postgresql-contrib
+
+# Apache and PHP
+aptitude install apache2 apache2-mpm-prefork php5
+
+# Basic mail server stuff
+aptitude install postfix postfix-pgsql
+aptitude install dovecot-core dovecot-pgsql     # For Dovecot SASL
+aptitude install dovecot-lmtpd                  # For Dovecot mailbox delivery
+aptitude install dovecot-imapd
+
+# Content filtering for mail
+aptitude install amavisd-new spamassassin clamav-daemon
+aptitude install pyzor razor
+aptitude install arj cabextract nomarch unrar unzip zip zoo
+
+# Roundcube (taken from dependencies of roundcube)
+aptitude install php5-mcrypt php5-gd php5-intl php-mdb2 php-auth php-auth-sasl php-net-smtp php-net-socket php-mail-mime php5-pspell tinymce libjs-jquery libjs-jquery-ui
+aptitude install php5-pgsql
+
+# phpPgAdmin
+aptitude install phppgadmin
+
+# MySQL client
+aptitude install mysql-client
+
+# MySQL server
+aptitude install mysql-server
+
+# phpMyAdmin
+aptitude install phpmyadmin
+
+# GitLab
+aptitude install libgdbm-dev libreadline-dev libffi-dev libcurl4-openssl-dev checkinstall libicu-dev
+aptitude install redis-server # from sid for kfreebsd-amd64
+aptitude install libpq-dev
+aptitude install sudo
+
+
+### TODO: rest
+
+# libdispatch support
+aptitude install libdispatch-dev
+aptitude install llvm-gcc-4.2
+aptitude install clang
+
