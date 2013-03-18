@@ -1,5 +1,7 @@
 -- postfix_virtual_alias_and_mailboxes_with_postgresql.sql
+-- 
 -- Created by Joel Lopes Da Silva on 1/10/2013.
+-- Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
 
 -- This is a very rough list of commands without much in the way of 
 -- explanations. Hopefully I can turn this into a nice tutorial someday.
