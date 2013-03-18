@@ -1,0 +1,60 @@
+# Installing GitLab 5.0.0.beta1 on Debian GNU/kFreeBSD Wheezy
+#
+# Created by Joel Lopes Da Silva on 3/18/13.
+# Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+
+# Based on ...
+# https://github.com/gitlabhq/gitlab-public-wiki/wiki/Debian-Squeeze-complete-Installation-'script'-with-RVM
+# https://github.com/gitlabhq/gitlabhq/blob/master/doc/install/installation.md
+# https://github.com/gitlabhq/gitlabhq/blob/master/doc/install/databases.md
+# https://github.com/gitlabhq/gitlab-recipes/blob/master/apache/gitlab
+#
+# ... using the following changes ...
+
+# redis-server isn't available for Wheezy kfreebsd-amd64; but it is for sid.
+# So temporarily add to /etc/apt/sources.list:
+# deb http://mirror.cc.columbia.edu/debian/ wheezy main contrib non-free
+aptitude update
+aptitude install redis-server
+# and remove that line from /etc/apt/sources.list
+aptitude update
+
+# Instead of adduser --disabled-login --gecos 'GitLab' git
+add_system_group git 120
+adduser --home /var/lib/git --uid 120 --ingroup git --disabled-password --disabled-login git
+chsh git
+chfn git
+
+# python2; as git:
+mkdir ~git/bin
+cd ~git/bin
+ln -s /usr/bin/python2.7 python2
+
+# Install .zshenv, .zshrc, .bashrc
+
+# RVM setup
+rvm --debug install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
+rvm gemset create gitlab
+rvm --default use 2.0.0@gitlab
+
+# We want postgresql, so, as git, in ~git/gitlab:
+cp config/database.yml.postgresql config/database.yml
+[...]
+bundle install --deployment --without development test mysql
+
+# Installing therubyracer will fail on Debian GNU/kFreeBSD AMD64; when it does:
+patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_fix_libv8_build_for_therubyracer_GNU_kFreeBSD.diff
+cd ~git/gitlab/vendor/bundle/ruby/2.0.0/gems/libv8-3.3.10.4/lib/libv8/build/v8
+../scons/install/bin/scons arch="x64"
+cd ~git/gitlab
+bundle install --deployment --without development test mysql
+
+# Patch grit before proceeding with setup
+patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_fix_grit_with_ruby_2.0.0_and_git_pack_format_parsing.diff
+
+# Patch init script, from /etc/init.d
+patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_init_script_load_bashrc_and_fix_home_directory_location.diff
+
+# Instead of update-rc.d
+insserv --verbose gitlab
+
