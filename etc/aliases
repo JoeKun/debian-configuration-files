@@ -12,68 +12,11 @@ admin:                  root
 # Main services
 #-----------------------------------------------------------
 
-# Web
-webadmin:               root
-webmaster:              webadmin
-www:                    webadmin
-www-data:               webadmin
-
 # Mail
-mail:                   root
-mailer-daemon:          mail
-abuse:                  mail
-postfix:                mail
-postmaster:             mail
+abuse:                  admin
+postmaster:             admin
 
-# Mailing list
-list:                   root
-
-# Antivirus
-clamav:                 root
-amavis:                 root
-amavis-stats:           amavis
-
-# Secure SHell
-ssh:                    root
-sshd:                   ssh
-
-# FTP
-ftp:                    root
-ftpadmin:               ftp
-
-# News
-news:                   root
-usenet:                 news
-
-# MySQL
-mysql:                  root
-mysqladmin:             mysql
-
-# PostGreSQL
-postgresql:             root
-postgres:               postgresql
-pgsql:                  postgresql
-pgsqladmin:             pgsql
-
-# Subversion
-subversion:             root
-svn:                    subversion
-svnadmin:               svn
-
-# Man pages
-man:                    root
-
-# Gnats Bug-Reporting System
-gnats:                  root
-
-# Proxy
-proxy:                  root
-
-# Divers
-adm:                    root
-daemon:                 root
-hostmaster:             root
-nobody:                 root
-noc:                    root
-security:               root
+# Web
+webadmin:               admin
+webmaster:              webadmin
 
