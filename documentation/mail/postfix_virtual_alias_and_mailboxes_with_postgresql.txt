@@ -98,3 +98,5 @@ UPDATE mailboxes SET active = false WHERE address = 'addr-2@disabled.foo.com';
 -- adduser --system --home /var/mail/virtual --shell /bin/false --no-create-home --uid 114 --ingroup virtual_mail --disabled-password --disabled-login virtual_mail
 -- chfn virtual_mail
 
+-- for the password field in the mailboxes table, you should use the following command:
+-- doveadm pw -s SHA512-CRYPT 
