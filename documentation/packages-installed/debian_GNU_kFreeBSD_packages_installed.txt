@@ -11,6 +11,7 @@ updatedb                                        # initialize locate
 aptitude install htop                           # nice process monitoring utility
 aptitude install bzip2                          # useful for tar xvjf
 aptitude install colordiff                      # wrapper around diff to produce colorized output
+aptitude install screen                         # screen manager
 
 # General networking tools
 aptitude install curl                           # for compatibility with simple scripts written for OS X
