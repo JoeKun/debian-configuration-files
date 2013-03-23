@@ -10,10 +10,8 @@ working_directory app_dir
 # worker spawn times
 preload_app true
 
-# Nuke workers after 5 minutes (60 seconds is the default).
-# The suggested value of 30 seconds is a little low for cloning decent 
-# sized repositories over HTTP.
-timeout 300
+# nuke workers after 30 seconds (60 is the default)
+timeout 30
 
 # listen on a Unix domain socket and/or a TCP port,
 
