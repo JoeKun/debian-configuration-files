@@ -1,0 +1,71 @@
+#! /bin/sh
+# 
+# svnadmin_setup_dav_permissions
+# 
+# Created by Joel Lopes Da Silva on 3/29/09.
+# Copyright © 2009-2013 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+# svnadmin_setup_dav_permissions
+# Fixes permissions of a subversion repository created with svnadmin 
+# so it's usable with the dav_svn module of Apache 2.
+
+repository=$1
+owner=$2
+svn_path=/var/lib/svn
+apache_user=www-data
+apache_group=www-data
+
+echo -n "Correcting permissions for $repository Subversion Repository... "
+
+cd $svn_path
+
+chown -R $owner:$apache_group $repository
+find $repository -type f -print0 | xargs -0 chmod 0660
+find $repository -type d -print0 | xargs -0 chmod 0770
+chmod 444 $repository/format
+chmod 644 $repository/README.txt
+chmod 640 $repository/conf/*
+if [ -e "$repository/conf/svnpasswd" ]
+then
+    chmod 640 $repository/conf/svnpasswd
+fi
+if [ -e "$repository/dav/activities" ]
+then
+    chown $apache_user:$apache_group $repository/dav/activities
+    chmod 755 $repository/dav/activities
+fi
+if [ -e "$repository/db/current" ]
+then
+    chown $apache_user:$apache_group $repository/db/current
+fi
+if [ -e "$repository/db/format" ]
+then
+    chmod 444 $repository/db/format
+fi
+chown -R $apache_user:$apache_group $repository/db/revprops/*
+chmod 0755 $repository/db/revprops/*
+chown -R $apache_user:$apache_group $repository/db/revs/*
+chmod 0755 $repository/db/revs/*
+chmod 750 $repository/hooks/*
+chmod 640 $repository/hooks/*.tmpl
+chmod 640 $repository/locks/*
+
+echo "done."
+echo 
+echo "Don't forget to configure properly the post-commit hook and permissions!"
+
+exit 0
+

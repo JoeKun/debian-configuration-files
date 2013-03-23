@@ -83,6 +83,9 @@ aptitude install redis-server # from sid for kfreebsd-amd64
 aptitude install libpq-dev
 aptitude install sudo
 
+# Subversion Server
+aptitude install libapache2-svn
+
 
 ### TODO: rest
 
