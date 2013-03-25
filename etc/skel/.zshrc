@@ -1,36 +1,10 @@
 # ~/.zshrc: Personal parameters for zsh
 
 #-----------------------------------------------------------
-# Welcome message
+# Personal aliases
 #-----------------------------------------------------------
 
-NAME="$USER"
-
-echo
-figlet -c -t -f slant "Hello $NAME"
-echo
-
-
-#-----------------------------------------------------------
-# Fortune...
-#-----------------------------------------------------------
-
-fortune
-echo
-
-
-#-----------------------------------------------------------
-# Other little settings
-#-----------------------------------------------------------
-
-# When coming from some user's home, I want to arrive in git's home.
-for login in root admin joel
-do
-    if [ "`pwd`" = "`grep "^${login}:x:" /etc/passwd | cut -d : -f 6`" ]
-    then
-        cd
-    fi
-done
+# Nothing yet.
 
 
 #-----------------------------------------------------------
@@ -55,4 +29,3 @@ autoload -Uz compinit
 compinit
 
 # End of lines added by compinstall
-

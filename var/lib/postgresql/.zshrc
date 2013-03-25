@@ -4,7 +4,7 @@
 # Welcome message
 #-----------------------------------------------------------
 
-NAME="GateOne"
+NAME="$USER"
 
 echo
 figlet -c -t -f slant "Hello $NAME"
@@ -23,7 +23,7 @@ echo
 # Other little settings
 #-----------------------------------------------------------
 
-# When coming from some user's home, I want to arrive in gateone's home.
+# When coming from some user's home, I want to arrive in postgres's home.
 for login in root admin joel
 do
     if [ "`pwd`" = "`grep "^${login}:x:" /etc/passwd | cut -d : -f 6`" ]
@@ -36,13 +36,6 @@ done
 #-----------------------------------------------------------
 # Lines automatically added by some programs
 #-----------------------------------------------------------
-
-# Load virtualenvwrapper
-export WORKON_HOME=$HOME/.virtualenvs
-[[ -s "/etc/bash_completion.d/virtualenvwrapper" ]] && source "/etc/bash_completion.d/virtualenvwrapper"
-
-# Use the gateone virtualenv by default
-workon gateone
 
 # Lines configured by zsh-newuser-install
 
@@ -59,4 +52,3 @@ autoload -Uz compinit
 compinit
 
 # End of lines added by compinstall
-
