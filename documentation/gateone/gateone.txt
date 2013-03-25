@@ -1,0 +1,56 @@
+# Installing GateOne 1.2.0 on Debian GNU/kFreeBSD Wheezy
+#
+# Created by Joel Lopes Da Silva on 3/24/13.
+# Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+
+# As root
+aptitude install dtach
+aptitude install python-virtualenv
+aptitude install virtualenvwrapper
+aptitude install python-dev libjpeg8 libjpeg62-dev libfreetype6 libfreetype6-dev
+add_system_group gateone 121
+adduser --home /var/lib/gateone --uid 121 --ingroup gateone --disabled-password --disabled-login gateone
+cp /debian-configuration-files/etc/sudoers.d/gateone /etc/sudoers.d/gateone
+chown root:root /etc/sudoers.d/gateone
+chmod 440 /etc/sudoers.d/gateone
+su gateone
+
+# As gateone
+mkvirtualenv gateone
+workon gateone
+pip install tornado
+pip install Pillow
+git clone https://github.com/liftoff/GateOne.git gateone-source
+cd
+ln -s /debian-configuration-files/var/lib/gateone/.bashrc
+logout
+
+# As root
+python setup.py install --prefix=/var/lib/gateone
+cd ~gateone
+chown gateone:gateone *
+mkdir ~gateone/gateone/run
+su gateone
+
+# As gateone
+cd ~/.virtualenvs/gateone/lib/python2.7/site-packages
+ls -1 ../../../../../lib/python2.7/site-packages/ | cut -d "/" -f 1 | while read line; do ln -s "../../../../../lib/python2.7/site-packages/$line" ; done
+cd ~/gateone
+./gateone.py
+# control+C
+vim settings/10server.conf
+# set port to 2222
+# save and quit
+vim settings/50terminal.conf
+# right after: "commands": {
+# insert: "login": "sudo /bin/login", 
+# it should look like: "commands": {"login": "sudo /bin/login", "SSH": "/var/lib/gateone/gateone/applications/terminal/plugins/ssh/scripts/ssh_connect.py -S '%SESSION_DIR%/%SESSION%/%SHORT_SOCKET%' --sshfp -a '-oUserKnownHostsFile=\\\"%USERDIR%/%USER%/.ssh/known_hosts\\\"'"},
+# set default_command to "login"
+# save and quit
+
+# Patch init script, from /etc/init.d
+patch -p1 -i /debian-configuration-files/documentation/gateone/gateone-1.2.0_init_script_run_unprivileged_load_bashrc_redirect_stderr_fix_boot_sequence.diff
+
+# Instead of update-rc.d
+insserv --verbose gateone
+

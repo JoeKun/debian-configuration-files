@@ -87,6 +87,12 @@ aptitude install sudo
 # Subversion Server
 aptitude install libapache2-svn
 
+# GateOne
+aptitude install dtach
+aptitude install python-virtualenv
+aptitude install virtualenvwrapper
+aptitude install python-dev libjpeg8 libjpeg62-dev libfreetype6 libfreetype6-dev
+
 
 ### TODO: rest
 
