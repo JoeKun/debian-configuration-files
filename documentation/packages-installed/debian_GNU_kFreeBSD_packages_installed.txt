@@ -87,6 +87,11 @@ aptitude install sudo
 # Subversion Server
 aptitude install libapache2-svn
 
+# Trac
+aptitude install trac
+aptitude install python-psycopg2 # For integration with PostgreSQL
+aptitude install libapache2-mod-python
+
 # GateOne
 aptitude install dtach
 aptitude install python-virtualenv
