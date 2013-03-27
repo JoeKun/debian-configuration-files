@@ -34,7 +34,7 @@ cd $svn_path
 
 chown -R $owner:$apache_group $repository
 find $repository -type f -print0 | xargs -0 chmod 0660
-find $repository -type d -print0 | xargs -0 chmod 0770
+find $repository -type d -print0 | xargs -0 chmod 2770
 chmod 444 $repository/format
 chmod 644 $repository/README.txt
 chmod 640 $repository/conf/*
@@ -56,9 +56,9 @@ then
     chmod 444 $repository/db/format
 fi
 chown -R $apache_user:$apache_group $repository/db/revprops/*
-chmod 0755 $repository/db/revprops/*
+chmod 2755 $repository/db/revprops/*
 chown -R $apache_user:$apache_group $repository/db/revs/*
-chmod 0755 $repository/db/revs/*
+chmod 2755 $repository/db/revs/*
 chmod 750 $repository/hooks/*
 chmod 640 $repository/hooks/*.tmpl
 chmod 640 $repository/locks/*
