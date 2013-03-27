@@ -32,8 +32,8 @@ virtual_alias_domains = proxy:pgsql:/etc/postfix/sql/virtual_alias/domains.cf
 virtual_mailbox_domains = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/domains.cf
 
 # List of domains this server accepts email for and relays it to 
-# other mail servers
-# relay_domains = hey.tld
+# other mail servers or handlers.
+relay_domains = lists.foo.com
 
 
 #-----------------------------------------------------------
@@ -42,14 +42,13 @@ virtual_mailbox_domains = proxy:pgsql:/etc/postfix/sql/virtual_mailbox/domains.c
 
 # Aliases files
 alias_maps     = hash:/etc/aliases
-#                  hash:/var/lib/mailman/data/aliases
 alias_database = hash:/etc/aliases
 
 # Virtual aliases mapping
 virtual_alias_maps = proxy:pgsql:/etc/postfix/sql/virtual_alias/maps.cf
 
 # Relay domains mapping
-# transport_maps = hash:/etc/postfix/aliases/transport/hey.tld
+transport_maps = hash:/etc/postfix/transport
 
 
 #-----------------------------------------------------------
@@ -156,6 +155,7 @@ smtpd_recipient_restrictions = permit_mynetworks
                                permit_auth_destination
                                reject
 
+
 #-----------------------------------------------------------
 # AMaViS configuration
 #-----------------------------------------------------------
@@ -167,6 +167,13 @@ content_filter = smtp-amavis:[127.0.0.1]:10024
 # original address instead of the result of performing the virtual aliases
 # substitutions, and other sorts of mappings.
 receive_override_options = no_address_mappings
+
+
+#-----------------------------------------------------------
+# Mailman configuration
+#-----------------------------------------------------------
+
+mailman_destination_recipient_limit = 1
 
 
 #-----------------------------------------------------------

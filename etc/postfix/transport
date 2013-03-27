@@ -1,0 +1,5 @@
+# /etc/postfix/transport: Transport maps for relay domains for postfix
+
+# Mailing lists managed by mailman
+lists.foo.com           mailman:
+
