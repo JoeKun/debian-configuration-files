@@ -5,7 +5,7 @@
     # Basic configuration
     ServerName blog.foo.com
     ServerAdmin admin@foo.com
-    DocumentRoot /home/tagada/web/blog
+    DocumentRoot /home/foo/web/blog
     
     # Log configuration
     <FilesMatch \.(jpg|gif|png)$>
@@ -21,7 +21,7 @@
     # Basic configuration
     ServerName blog.foo.com
     ServerAdmin admin@foo.com
-    DocumentRoot /home/tagada/web/blog
+    DocumentRoot /home/foo/web/blog
     
     # Log configuration
     <FilesMatch \.(jpg|gif|png)$>
