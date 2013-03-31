@@ -12,6 +12,7 @@ aptitude install htop                           # nice process monitoring utilit
 aptitude install bzip2                          # useful for tar xvjf
 aptitude install colordiff                      # wrapper around diff to produce colorized output
 aptitude install screen                         # screen manager
+aptitude install mmv                            # for mass moving
 
 # General networking tools
 aptitude install curl                           # for compatibility with simple scripts written for OS X
