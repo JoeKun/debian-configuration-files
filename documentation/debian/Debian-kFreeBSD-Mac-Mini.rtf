@@ -323,4 +323,12 @@ We need to make room for Debian at the end of the main disk. Interestingly, when
 \f0\fs24 {\listtext	15.	}
 \f1\fs22 reboot -f
 \f0\fs24 \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+\cf0 \
+
+\b TODO
+\b0 : explain setup of FreeBSD volume with appropriate boot.efi; for now, have to use refit and configure it to automatically pick "Linux", which is how we point refit to the USB drive\
+In the near future, we should be able to skip refit altogether, thanks to some amazing work done to allow FreeBSD to boot from EFI on amd64 architectures; cf. https://wiki.freebsd.org/UEFI\
+We we do this, I expect we will be able to have a single boot.efi that directly boots FreeBSD without the need for GRUB nor the USB drive.\
 }
