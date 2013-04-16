@@ -21,9 +21,14 @@ acl buddyns-transfer {
 	2a01:4f8:d12:d01::10:100;
 };
 
+// baz.dinauz.org
+masters baz {
+	123.45.67.89;
+};
+
 
 //-----------------------------------------------------------
-// DNS Zones Configuration
+// DNS Zones Configuration as master
 //-----------------------------------------------------------
 
 zone "foo.com" {
@@ -37,14 +42,20 @@ zone "foo.com" {
 	};
 };
 
+
+//-----------------------------------------------------------
+// DNS Zones Configuration as slave
+//-----------------------------------------------------------
+
 zone "bar.com" {
-	type master;
-	file "master/bar.com.zone";
+	type slave;
+	file "slave/bar.com.zone";
+	masters {
+		baz;
+	};
 	allow-query {
 		any;
 	};
-	allow-transfer {
-		buddyns-transfer;
-	};
+	notify no;
 };
 
