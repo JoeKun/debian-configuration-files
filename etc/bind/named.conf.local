@@ -21,7 +21,7 @@ acl buddyns-transfer {
 	2a01:4f8:d12:d01::10:100;
 };
 
-// baz.dinauz.org
+// baz.org
 masters baz {
 	123.45.67.89;
 };
