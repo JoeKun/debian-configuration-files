@@ -1,0 +1,126 @@
+# ~/.mutt/conf/options: General options for mutt
+
+#-----------------------------------------------------------
+# Displaying messages
+#-----------------------------------------------------------
+
+# Pretty titles in terminal
+set xterm_set_titles = yes
+set xterm_title = "Mutt with %?m?%m messages&no messages?%?n? [%n NEW]?"
+
+# Don't move to next message when pressing "next page" while at the end of one
+# message.
+set pager_stop
+
+# Number of lines from messages list at the top when reading messages
+set pager_index_lines = 7
+
+# Sort by threads
+folder-hook . set sort = threads
+# Messages in a thread are sorted by date
+folder-hook . set sort_aux = date
+
+# Don't rely on "Subject" header for building threads; instead, rely 
+# only on headers "Reply-To" and "References".
+set strict_threads
+
+# No markers for line wrapping
+unset markers
+
+# Folder format
+#set folder_format = "%3C %t %N %t %-25.25f %> %2l %t %d %t %t %F %t %g"
+set folder_format = " %f %> [%N] "
+
+# Format for subject of forwarded messages
+set forward_format = "[%a: %s]"
+
+# Format for messages index
+set index_format = "%4C %Z %{%b %d} %-15.15F (%4l) %s"
+#set index_format = "%4C %H %Z %{%b %d} %-20.20L (%4l) %s"
+#set index_format = "%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s"
+
+# Headers format
+set hdr_format = "%3C %Z %{%b %d} %-15.15n (%3l) %s"
+
+# Content type handling
+unauto_view *
+auto_view text/html
+auto_view application/msword application/x-zip-compressed application/pdf
+alternative_order text/plain text/html *
+
+
+#-----------------------------------------------------------
+# Headers for reading and composing messages
+#-----------------------------------------------------------
+
+# Ignore all headers...
+ignore *
+# ...except for the following ones
+unignore From: To Cc Subject Date Reply-To #X-Mailer User-Agent X-Approved-By
+
+# Order for displaying headers
+hdr_order From Date To Cc Subject
+
+# Make the distinction between To: and Reply-To:
+unset ignore_list_reply_to
+
+
+#-----------------------------------------------------------
+# Locales and regional options
+#-----------------------------------------------------------
+
+# Locale and character set
+set locale = en_US.UTF-8
+set charset = utf-8
+set send_charset = utf-8
+
+# Prevent converting 8-bits characters into 7-bits characters when sending
+# messages.
+set allow_8bit
+
+# Date format for quoted text in replies
+set date_format = "%A, %B %d, %Y, at %I:%M %p"
+
+# Attribution string for quoted text in replies
+set attribution = "On %d, %n wrote:"
+
+
+#-----------------------------------------------------------
+# Other
+#-----------------------------------------------------------
+
+# Time interval for checking for new messages, in seconds.
+set mail_check = 120
+
+# No beep when encountering errors
+unset beep
+
+# No beep when getting new messages
+unset beep_new
+
+# Don't ask for confirmation before deleting a message when leaving a mailbox.
+set delete = yes
+
+# Don't mark messages as "old" when leaving their mailboxes.
+unset mark_old
+
+# Attach forwarded messages in MIME format
+set mime_forward
+
+# Decode complex MIME messages into simple text when forwarding messages.
+set forward_decode
+
+# Attempt using IPv6 first for outgoing network traffic
+set use_ipv6
+
+# Miscellaneous
+unset arrow_cursor
+set check_new
+unset confirmappend
+set dsn_notify = "failure,delay"
+set dsn_return = hdrs
+unset forw_quote
+set move = no
+unset sig_dashes
+set use_8bitmime
+

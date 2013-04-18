@@ -1,0 +1,11 @@
+# ~/.mutt/conf/imap: General IMAP configuration for mutt
+
+# IMAP connection
+set imap_check_subscribed
+set imap_keepalive = 300
+
+# Caches and certificates
+set header_cache = ~/.mutt/cache/headers
+set message_cachedir = ~/.mutt/cache/bodies
+set certificate_file = ~/.mutt/certificates
+

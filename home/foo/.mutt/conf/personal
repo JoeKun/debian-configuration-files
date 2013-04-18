@@ -1,0 +1,12 @@
+# ~/.mutt/conf/personal: Personal configuration for mutt
+
+# Real name
+set realname = "Your Name"
+
+# Signature file
+set signature = ~/.mutt/signature
+
+# Aliases files
+set alias_file = ~/.mutt/aliases
+source ~/.mutt/aliases
+

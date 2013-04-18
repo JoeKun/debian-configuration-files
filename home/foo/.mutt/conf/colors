@@ -1,0 +1,89 @@
+# ~/.mutt/conf/colors: Color preferences for mutt
+
+#-----------------------------------------------------------
+# General application structure
+#-----------------------------------------------------------
+
+# Selection bar
+color indicator   brightyellow    red
+
+# Error messages
+color error       brightred       default
+mono  error       bold
+
+# Indicators at the top and bottom of the window
+color status      brightwhite     blue
+
+# Threads tree
+color tree        brightmagenta   default
+
+# "~" used in pager for empty lines at the end of a message
+color tilde       brightmagenta   default
+
+
+#-----------------------------------------------------------
+# Headers
+#-----------------------------------------------------------
+
+# Date
+color header      brightwhite     default "^date:"
+
+# Sender
+color header      brightgreen     default "^from:"
+mono  header      bold                    "^from:"
+
+# Recipient
+color header      brightmagenta   default "^to:"
+
+# CC
+color header      brightblue      default "^cc:"
+
+# Subject
+color header      brightyellow    default "^subject:"
+mono  header      bold                    "^subject:"
+
+# Resent
+color header      white           default "^resent-"
+
+# Special headers
+color header      white           default "^x-"
+
+# Mail client
+color header      white           default "^User-Agent"
+
+# In reply to
+color header      cyan            default "^Reply-To"
+
+
+#-----------------------------------------------------------
+# Special tokens in message body
+#-----------------------------------------------------------
+
+# Titles
+color body        brightblue      default "(^[ ]*[0-9][ ]?([.)]).*|^cr .*|^([-]|=|[_]|¯)([-]|=|[_]|¯)+)"
+
+# Quoted text
+color quoted      green           default
+
+# Signature
+color signature   brightred       default
+
+# URLs
+color body        magenta         default "(ftp|http|https|gopher|wais|file)://[^ ()<>,]+"
+mono  body        bold                    "(ftp|http|https|gopher|wais|file)://[^ ()<>,]+"
+
+# email addresses
+color body        magenta         default "[-a-z_0-9.]+@[-a-z_0-9.]+"
+mono  body        bold                    "[-a-z_0-9.]+@[-a-z_0-9.]+"
+
+# Good or bad signatures
+color body        brightyellow    default "^Good signature"
+mono  body        bold                    "^Good signature"
+color body        brightwhite     default "^Bad signature from.*"
+mono  body        bold                    "^Bad signature from.*"
+
+# Smileys
+color body        brightyellow    default "[:]+[-^o]?[])>}D]+"
+color body        brightgreen     default "([:;]+[-^o]?[Pp]+)|([;][-^o]?[])>}D]+)"
+color body        brightred       default "[:;]+[-^o]?[[(<{|/\\]+"
+

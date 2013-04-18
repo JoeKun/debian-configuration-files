@@ -1,0 +1,52 @@
+# ~/.mutt/conf/gnupg: Configuration for GnuPG integration in mutt
+
+# Decode application/pgp attachments
+set pgp_decode_command = "/usr/bin/gpg --status-fd=2 %?p?--passphrase-fd 0? --no-verbose --quiet --batch --output - %f"
+
+# Verifu pgp/mime signatures
+set pgp_verify_command = "/usr/bin/gpg --status-fd=2 --no-verbose --quiet --batch --output - --verify %s %f" 
+
+# Decrypt pgp/mime attachments
+set pgp_decrypt_command = "/usr/bin/gpg --status-fd=2 --passphrase-fd 0 --no-verbose --quiet --batch --output - %f"
+
+# Create pgp/mime signed attachment
+set pgp_sign_command = "/usr/bin/gpg --no-verbose --batch --quiet --output - --passphrase-fd 0 --armor --detach-sign --textmode %?a?-u %a? %f"
+
+# Create application/pgp signed attachment (old-style)
+set pgp_clearsign_command = "/usr/bin/gpg --no-verbose --batch --quiet --output - --passphrase-fd 0 --armor --textmode --clearsign %?a?-u %a? %f"
+
+# Create pgp/mime crypted attachment
+set pgp_encrypt_only_command = "/usr/lib/mutt/pgpewrap /usr/bin/gpg --batch --quiet --no-verbose --output - --encrypt --textmode --armor --always-trust -- -r %r -- %f"
+
+# Create pgp/mime crypted and signed attachment
+set pgp_encrypt_sign_command = "/usr/lib/mutt/pgpewrap /usr/bin/gpg --passphrase-fd 0 --batch --quiet --no-verbose --textmode --output - --encrypt --sign %?a?-u %a? --armor --always-trust -- -r %r -- %f"
+
+# Import key in keychain for public keys (pubring)
+set pgp_import_command = "/usr/bin/gpg --no-verbose --import -v %f"
+
+# Export key from keychain for public keys (pubring)
+set pgp_export_command = "/usr/bin/gpg --no-verbose --export --armor %r"
+
+# Verify key
+set pgp_verify_key_command = "/usr/bin/gpg --verbose --batch --fingerprint --check-sigs %r"
+
+# List contents of keychain for public keys (pubring)
+set pgp_list_pubring_command = "/usr/bin/gpg --no-verbose --batch --quiet --with-colons --list-keys %r" 
+
+# List contents of keychain for private keys (secring)
+set pgp_list_secring_command = "/usr/bin/gpg --no-verbose --batch --quiet --with-colons --list-secret-keys %r"
+
+# Fetch keys
+# set pgp_getkeys_command = "pkspxycwrap %r"
+set pgp_getkeys_command = ""
+
+# Pattern for good signature - may need to be adapted to locale!
+
+# set pgp_good_sign = "^gpg: Good signature from"
+
+# OK, here's a version which uses gnupg's message catalog:
+# set pgp_good_sign = "`gettext -d gnupg -s 'Good signature from "' | tr -d '"'`"
+
+# This version uses --status-fd messages
+# set pgp_good_sign = "^\\[GNUPG:\\] VALIDSIG"
+

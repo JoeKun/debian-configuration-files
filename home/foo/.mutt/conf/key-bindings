@@ -1,0 +1,67 @@
+# ~/.mutt/conf/key-bindings: Key-bindings for mutt
+
+# Generic
+bind generic    <home>          first-entry
+bind generic    <end>           last-entry
+bind generic    <down>          next-entry
+bind generic    <up>            previous-entry
+bind generic    n               next-entry
+bind generic    p               previous-entry
+bind generic    ' '             next-page
+bind generic    \Cv             next-page
+bind generic    \Cy             previous-page
+bind generic    <pageup>        previous-page
+bind generic    <pagedown>      next-page
+
+# Index
+bind index      b               bounce-message
+bind index      p               previous-undeleted
+bind index      n               next-undeleted
+bind index      s               search
+bind index      x               sync-mailbox
+bind index      N               search-reverse
+bind index      \t              next-unread
+bind index      <down>          next-entry
+bind index      <up>            previous-entry
+
+# Pager
+bind pager      <home>          top
+bind pager      <end>           bottom
+bind pager      \t              next-unread
+bind pager      ' '             next-page
+bind pager      <pageup>        previous-page
+bind pager      <pagedown>      next-page
+bind pager      \Cv             next-page
+bind pager      \Cy             previous-page
+bind pager      w               search
+bind pager      \n              noop
+bind pager      <up>            previous-line
+bind pager      <down>          next-line
+bind pager      N               search-reverse
+bind pager      p               previous-entry
+bind pager      n               next-entry
+bind pager      q               exit
+bind pager      s               save-message
+bind pager      b               bounce-message
+bind pager      n               search-next
+
+# Alias
+bind alias      N               search-reverse
+
+# Browser
+bind browser    N               search-reverse
+
+# Editor
+bind editor     <delete>        delete-char
+bind editor     <home>          bol
+bind editor     <end>           eol
+bind editor     <up>            history-up
+bind editor     <down>          history-down
+
+# Macros
+macro index,pager,browser       i       c?\t
+macro generic,pager             <f2>    "!mailq"
+macro generic,pager             <f3>    "!postqueue -f"
+macro generic,pager             <f4>    "!fetchmail"
+macro index,pager               c       "<change-folder>?<toggle-mailboxes>"    "open a different folder"
+

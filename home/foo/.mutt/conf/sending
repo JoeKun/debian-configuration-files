@@ -1,0 +1,33 @@
+# ~/.mutt/conf/sending: Configuration for sending messages with mutt
+
+# Text editor for writing new messages
+set editor = "vim -c 'set textwidth=72'"
+
+# Don't ask for list of addresses for cc
+unset askcc
+
+# Ask for confirmation before aborting sending an unmodified messages
+set abort_unmodified = ask-yes
+
+# Use adress in Reply-To: header for responses
+set reply_to
+
+# Regular expression used to find quoted text
+set quote_regexp = "^([ \t]*[|>:}#])+"
+
+# Reply without asking for confirmation of recipient and subject
+set fast_reply
+
+# Include original message in response without asking for confirmation
+set include = yes
+
+# Display name of sender from aliases file if that address is found in that
+# file.
+set reverse_alias
+
+# Make sure to honor header "Mail-Followup-To"
+set honor_followup_to
+
+# Allow editing headers when composing new message
+set edit_hdrs
+

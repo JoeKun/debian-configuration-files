@@ -1,0 +1,35 @@
+# ~/.mutt/conf/personal-gmail-account: Configuration for personal Gmail account
+
+# IMAP and SMTP configuration
+set imap_user = "foo@bar-google-apps-for-your-domain.com"
+set imap_pass = "foo_gafyd_password"
+set smtp_url = "smtp://foo@bar-google-apps-for-your-domain.com@smtp.gmail.com:587/"
+set smtp_pass = "foo_gafyd_password"
+
+# Sender address
+set from = "foo@bar-google-apps-for-your-domain.com"
+
+# Alternate email addresses; this is useful for group replies.
+alternates ^(foo@baz\.com)$'
+
+# Domain name to be used after "@" when the domain name is missing.
+set hostname = gmail.com
+set use_domain
+
+# Mailboxes
+set folder = "imaps://imap.gmail.com"
+set spoolfile = "+INBOX"
+set record = "+[Gmail]/Sent Mail"
+set postponed = "+[Gmail]/Drafts"
+
+# Gmail-style keyboard shortcuts
+macro index,pager       y       "<enter-command>unset trash\n <delete-message>"                                         "archive message in Gmail"
+macro index,pager       d       "<enter-command>set trash=\"imaps://imap.gmail.com/[Gmail]/Trash\"\n <delete-message>"  "delete message from Gmail"
+macro index,pager       gi      "<change-folder>=INBOX<enter>"                                                          "go to inbox"
+macro index,pager       ga      "<change-folder>=[Gmail]/All Mail<enter>"                                               "go to all mail"
+macro index,pager       gs      "<change-folder>=[Gmail]/Starred<enter>"                                                "go to starred messages"
+macro index,pager       gd      "<change-folder>=[Gmail]/Drafts<enter>"                                                 "go to drafts"
+
+# Sent mail is sorted by date
+folder-hook "+[Gmail]/Sent Mail" set sort = date
+

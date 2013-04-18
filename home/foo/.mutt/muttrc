@@ -1,0 +1,26 @@
+# ~/.mutt/muttrc: Configuration for mutt
+
+# Personal configuration
+source ~/.mutt/conf/personal
+
+# Accounts configuration
+source ~/.mutt/conf/personal-gmail-account
+
+# General IMAP configuration
+source ~/.mutt/conf/imap
+
+# Configuration for sending messages
+source ~/.mutt/conf/sending
+
+# Integration with GnuPG
+source ~/.mutt/conf/gnupg
+
+# Key bindings
+source ~/.mutt/conf/key-bindings
+
+# Colors preferences
+source ~/.mutt/conf/colors
+
+# General options
+source ~/.mutt/conf/options
+
