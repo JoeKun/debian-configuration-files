@@ -27,6 +27,10 @@ aptitude install openssh-server                 # need to be able to ssh in
 # Shell customization
 aptitude install figlet fortune                 # for my shell login script
 
+# Communication clients
+aptitude install mutt
+aptitude install irssi
+
 # Ruby support (with AR+Sqlite3)
 aptitude install ruby
 aptitude install libsqlite3-dev
