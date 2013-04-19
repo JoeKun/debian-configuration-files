@@ -73,7 +73,7 @@ mynetworks = [::ffff:127.0.0.0]/104
 inet_interfaces = all
 
 # If we ever need to use another server to relay outgoing mail
-relayhost = smtp.comcast.net
+# relayhost = smtp.isp.com
 # fallback_relay = 
 
 
