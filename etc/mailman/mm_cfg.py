@@ -57,7 +57,7 @@ MAILMAN_SITE_LIST = 'mailman'
 #-------------------------------------------------------------
 # If you change these, you have to configure your http server
 # accordingly (Alias and ScriptAlias directives in most httpds)
-DEFAULT_URL_PATTERN = 'http://%s/'
+DEFAULT_URL_PATTERN = 'https://%s/'
 PRIVATE_ARCHIVE_URL = '/private'
 IMAGE_LOGOS         = '/images/mailman/'
 
