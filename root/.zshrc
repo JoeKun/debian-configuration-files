@@ -24,20 +24,6 @@ fi
 
 
 #-----------------------------------------------------------
-# Other little settings
-#-----------------------------------------------------------
-
-# When coming from some user's home, I want to arrive in root's home.
-for login in admin joel
-do
-    if [ "`pwd`" = "`grep "^${login}:x:" /etc/passwd | cut -d : -f 6`" ]
-    then
-        cd
-    fi
-done
-
-
-#-----------------------------------------------------------
 # Lines automatically added by some programs
 #-----------------------------------------------------------
 

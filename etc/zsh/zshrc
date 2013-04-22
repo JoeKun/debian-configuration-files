@@ -57,9 +57,9 @@ bindkey '[6~' history-search-forward  # PgDn
 # Color prompt (the color is not the same for root and for simple users)
 if [ "`id -u`" -eq 0 ]
 then
-  export PS1="%{[36;1m%}%T %{[34m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
+    export PS1="%{[36;1m%}%T %{[34m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
 else
-  export PS1="%{[36;1m%}%T %{[31m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
+    export PS1="%{[36;1m%}%T %{[31m%}%n%{[33m%}@%{[37m%}%m %{[32m%}%~%{[33m%}%#%{[0m%} "
 fi
 
 # Handling directional keys: [home], [end] and others
@@ -227,6 +227,25 @@ setopt hist_expire_dups_first
 # History lookup with `zsh` command editor does not show a row more than
 # once, even if it has been stored
 setopt hist_find_no_dups
+
+
+#-----------------------------------------------------------
+# Other tweaks
+#-----------------------------------------------------------
+
+# When coming from some user's home, automatically move to the new user's home
+# directory.
+if [[ ! -o login ]]
+then
+    for directory in `grep ":/bin/zsh$" /etc/passwd | cut -d ":" -f 6`
+    do
+        if [ "`pwd`" = "$directory" ]
+        then
+            cd ~
+            break
+        fi
+    done
+fi
 
 
 #-----------------------------------------------------------
