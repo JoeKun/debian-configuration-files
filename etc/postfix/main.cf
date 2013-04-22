@@ -84,13 +84,9 @@ inet_interfaces = all
 # See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
 # information on enabling SSL in the smtp client.
 
-# For CAcert certificates
-#smtpd_tls_cert_file = /etc/ssl/foo.com/foo.com-cert.pem
-#smtpd_tls_key_file = /etc/ssl/foo.com/foo.com-key.pem
-#smtpd_tls_CAfile = /etc/ssl/cacert.org/cacert-class3.org
-
-smtpd_tls_cert_file = /etc/ssl/certs/ssl-cert-snakeoil.pem
-smtpd_tls_key_file = /etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_tls_cert_file = /etc/ssl/certs/foo.com_wildcard.pem
+smtpd_tls_key_file = /etc/ssl/private/foo.com_wildcard.key
+smtpd_tls_CAfile = /etc/ssl/certs/server-ca.pem
 smtpd_use_tls = yes
 smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
 smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
