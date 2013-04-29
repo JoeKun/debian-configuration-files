@@ -10,10 +10,39 @@
 
 # This file contains commands executed when the user opens a Terminal
 
+#-----------------------------------------------------------
+# System status
+#-----------------------------------------------------------
+
 # Prints information about the system
 uname -a
 uptime
 
 # Accept messages from other users
 mesg y
+
+
+#-----------------------------------------------------------
+# Welcome message
+#-----------------------------------------------------------
+
+[[ -z "${LOGIN_GREETING_NAME:-}" ]] && export LOGIN_GREETING_NAME="$USER"
+
+login_greeting_figlet_options=""
+(( ${LOGIN_GREETING_SLANTED_TEXT_DISABLED:=0} == 0 )) && login_greeting_figlet_options=("-f" "slant")
+echo
+figlet -c -t ${login_greeting_figlet_options[@]} "Hello $LOGIN_GREETING_NAME"
+echo
+unset login_greeting_figlet_options
+
+
+#-----------------------------------------------------------
+# Fortune...
+#-----------------------------------------------------------
+
+if (( ${FORTUNE_UPON_LOGIN_DISABLED:=0} == 0 ))
+then
+    fortune
+    echo
+fi
 

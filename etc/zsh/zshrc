@@ -299,13 +299,14 @@ compinit
 
 
 #-----------------------------------------------------------
-# Other tweaks
+# Other tweaks for non login shells
 #-----------------------------------------------------------
 
-# When coming from some user's home, automatically move to the new user's home
-# directory.
 if [[ ! -o login ]]
 then
+    
+    # When coming from some user's home, automatically move to the new 
+    # user's home directory.
     for home_directory in `grep ":/bin/zsh$" /etc/passwd | cut -d ":" -f 6`
     do
         if [[ "`pwd`" == "${home_directory}" ]]
@@ -315,5 +316,22 @@ then
         fi
     done
     unset home_directory
+    
+    # Welcome message
+    [[ -z "${LOGIN_GREETING_NAME:-}" ]] && export LOGIN_GREETING_NAME="$USER"
+    login_greeting_figlet_options=""
+    (( ${LOGIN_GREETING_SLANTED_TEXT_DISABLED:=0} == 0 )) && login_greeting_figlet_options=("-f" "slant")
+    echo
+    figlet -c -t ${login_greeting_figlet_options[@]} "Hey ${LOGIN_GREETING_NAME}"
+    echo
+    unset login_greeting_figlet_options
+    
+    # Fortune
+    if (( ${FORTUNE_UPON_LOGIN_DISABLED:=0} == 0 ))
+    then
+        fortune
+        echo
+    fi
+    
 fi
 

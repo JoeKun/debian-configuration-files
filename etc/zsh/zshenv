@@ -34,3 +34,8 @@ umask 022
 # Use color for grep
 export GREP_OPTIONS='--color=auto'
 
+# Make sure user settings for login is not preserved from previous shells.
+unset LOGIN_GREETING_NAME
+unset LOGIN_GREETING_SLANTED_TEXT_DISABLED
+unset FORTUNE_UPON_LOGIN_DISABLED
+
