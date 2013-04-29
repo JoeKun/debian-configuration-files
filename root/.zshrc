@@ -18,7 +18,7 @@ then
     echo
     figlet -c -t 'Hey Root!'
     echo
-    echo "Be careful with what you are about to do now!"
+    echo "Be careful not to break anything!"
     echo
 fi
 
