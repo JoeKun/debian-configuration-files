@@ -4,29 +4,18 @@
 # Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
 
 # Install
-groupadd --gid 107 rvm
+cd ~root
+ln -s /debian-configuration-files/root/.rvmrc
 curl -L https://get.rvm.io | bash
 rm -f /etc/profile.d/rvm.sh /etc/rvmrc
 logout
-rvm --debug install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
+rvm install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
 
 # System gemsets
 rvm gemset create integrity_check
 rvm gemset use integrity_check
 gem install activerecord sqlite3
 
-# Fix permissions
-cd /usr/local/rvm
-find . -type f -print0 | xargs -0 chmod g+w
-find . -type d -print0 | xargs -0 chmod g+w
-find . -type d -print0 | xargs -0 chmod g+s
-cd src/rvm/scripts/zsh
-find . -type f -print0 | xargs -0 chmod g-w
-find . -type d -print0 | xargs -0 chmod g-w
-find . -type d -print0 | xargs -0 chmod g-s
-chown --recursive --no-dereference root:rvm /usr/local/rvm
-
 # Uninstall
-rm -f /etc/profile.d/rvm.sh /etc/rvmrc
-rm -R -f /usr/local/rvm /usr/local/share/man/man1/rvm*
-rm -R -f ~/.gem
+rm -R -f /etc/profile.d/rvm.sh /etc/rvmrc /usr/local/rvm /usr/local/share/man/man1/rvm* ~root/.rvm ~root/.gem ~root/.rvmrc
+

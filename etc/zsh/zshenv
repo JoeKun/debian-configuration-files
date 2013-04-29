@@ -9,7 +9,8 @@
 # Modified by Joel Lopes Da Silva.
 
 # PATH & MANPATH
-export PATH="/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/usr/sbin:/sbin:/usr/games:$HOME/bin"
+export PATH="/usr/local/bin:/usr/local/sbin:/bin:/usr/bin:/usr/sbin:/sbin:/usr/games"
+[[ -x "$HOME/bin" ]] && export PATH="$PATH:$HOME/bin"
 
 # Default viewer and editor (for Crontab, CVS, ...)
 export VISUAL=vim
