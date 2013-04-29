@@ -14,6 +14,6 @@
 echo
 figlet -t -c 'Hello Root!'
 echo
-echo "Be careful with what you are about to do today!"
+echo "Be careful not to break anything today!"
 echo
 
