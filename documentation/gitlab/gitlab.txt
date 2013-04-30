@@ -19,6 +19,11 @@ aptitude install redis-server
 # and remove that line from /etc/apt/sources.list
 aptitude update
 
+# System provided ruby seems much more stable and robust than custom ruby builds.
+aptitude install ruby ruby-dev
+gem install bundler
+gem install charlock_holmes --version '0.6.9'
+
 # Instead of adduser --disabled-login --gecos 'GitLab' git
 add_system_group git 120
 adduser --home /var/lib/git --uid 120 --ingroup git --disabled-password --disabled-login git
@@ -32,28 +37,22 @@ ln -s /usr/bin/python2.7 python2
 
 # Install .zshenv, .zshrc, .bashrc
 
-# RVM setup
-rvm --debug install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
-rvm gemset create gitlab
-rvm --default use 2.0.0@gitlab
+# Installing libv8 tends to fail on Debian GNU/kFreeBSD AMD64.
+git clone https://github.com/cowboyd/libv8.git
+cd libv8
+git checkout -b 3.11-kfreebsd origin/3.11
+patch -p1 -i /debian-configuration-files/documentation/gitlab/libv8-build-fix-Debian-GNU-kFreeBSD.diff
+git commit -a -m "Fix build for Debian GNU/kFreeBSD."
+gem build libv8.gemspec
+# Move libv8-3.11.8.17.gem to ~git/gitlab/vendor/bundle/ruby/1.9.1/cache/
 
 # We want postgresql, so, as git, in ~git/gitlab:
 cp config/database.yml.postgresql config/database.yml
 [...]
 bundle install --deployment --without development test mysql
 
-# Installing therubyracer will fail on Debian GNU/kFreeBSD AMD64; when it does:
-patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_fix_libv8_build_for_therubyracer_GNU_kFreeBSD.diff
-cd ~git/gitlab/vendor/bundle/ruby/2.0.0/gems/libv8-3.3.10.4/lib/libv8/build/v8
-../scons/install/bin/scons arch="x64"
-cd ~git/gitlab
-bundle install --deployment --without development test mysql
-
-# Patch grit before proceeding with setup
-patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_fix_grit_with_ruby_2.0.0_and_git_pack_format_parsing.diff
-
 # Patch init script, from /etc/init.d
-patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.0.0.beta1_init_script_load_bashrc_and_fix_home_directory_location.diff
+patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.1.0_init_script_load_bashrc_and_fix_home_directory_location.diff
 
 # Instead of update-rc.d
 insserv --verbose gitlab

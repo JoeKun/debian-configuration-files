@@ -1,0 +1,42 @@
+diff -ru ruby-1.9.3-p392-orig/configure ruby-1.9.3-p392/configure
+--- ruby-1.9.3-p392-orig/configure	2013-02-22 01:44:43.000000000 -0800
++++ ruby-1.9.3-p392/configure	2013-04-29 23:40:05.538447387 -0700
+@@ -14481,7 +14481,7 @@
+ 	      truncate64 ftruncate64 ftello64 fseeko fseeko64 \
+ 	      link symlink readlink readdir_r fsync fdatasync fchown posix_fadvise\
+ 	      setitimer setruid seteuid setreuid setresuid socketpair\
+-	      setrgid setegid setregid setresgid issetugid pause lchown lchmod\
++	      setrgid setegid setregid setresgid pause lchown lchmod\
+ 	      getpgrp setpgrp getpgid setpgid initgroups getgroups setgroups\
+ 	      getpriority getrlimit setrlimit sysconf close getgrnam_r\
+ 	      dlopen sigprocmask sigaction sigsetjmp _setjmp _longjmp\
+@@ -15798,7 +15798,7 @@
+ 	pthread_getattr_np pthread_attr_get_np pthread_attr_getstack\
+ 	pthread_get_stackaddr_np pthread_get_stacksize_np \
+ 	thr_stksegment pthread_stackseg_np pthread_getthrds_np \
+-	pthread_condattr_setclock pthread_sigmask
++	pthread_sigmask
+ do :
+   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+diff -ru ruby-1.9.3-p392-orig/configure.in ruby-1.9.3-p392/configure.in
+--- ruby-1.9.3-p392-orig/configure.in	2012-11-13 02:02:45.000000000 -0800
++++ ruby-1.9.3-p392/configure.in	2013-04-29 23:40:28.907447190 -0700
+@@ -1360,7 +1360,7 @@
+ 	      truncate64 ftruncate64 ftello64 fseeko fseeko64 \
+ 	      link symlink readlink readdir_r fsync fdatasync fchown posix_fadvise\
+ 	      setitimer setruid seteuid setreuid setresuid socketpair\
+-	      setrgid setegid setregid setresgid issetugid pause lchown lchmod\
++	      setrgid setegid setregid setresgid pause lchown lchmod\
+ 	      getpgrp setpgrp getpgid setpgid initgroups getgroups setgroups\
+ 	      getpriority getrlimit setrlimit sysconf close getgrnam_r\
+ 	      dlopen sigprocmask sigaction sigsetjmp _setjmp _longjmp\
+@@ -1795,7 +1795,7 @@
+ 	pthread_getattr_np pthread_attr_get_np pthread_attr_getstack\
+ 	pthread_get_stackaddr_np pthread_get_stacksize_np \
+ 	thr_stksegment pthread_stackseg_np pthread_getthrds_np \
+-	pthread_condattr_setclock pthread_sigmask)
++	pthread_sigmask)
+ fi
+ if test x"$ac_cv_header_ucontext_h" = xyes; then
+     if test x"$rb_with_pthread" = xyes; then
