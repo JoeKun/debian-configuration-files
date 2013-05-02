@@ -32,7 +32,7 @@ aptitude install mutt
 aptitude install irssi
 
 # Ruby support (with AR+Sqlite3)
-aptitude install ruby
+aptitude install ruby ruby-dev
 aptitude install libsqlite3-dev
 
 # Developer tools
@@ -40,6 +40,7 @@ aptitude install git                            # for the github.com/JoeKun/debi
 aptitude install libc0.1-dev                    # for rvm
 aptitude install make                           # for rvm
 aptitude install subversion                     # for rvm
+aptitude install gawk                           # for rvm
 aptitude install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev autoconf ncurses-dev automake libtool bison pkg-config
 
 # Debian tools

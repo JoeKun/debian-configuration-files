@@ -1,4 +1,4 @@
-# Installing rvm as root in /usr/local/rvm Debian GNU/kFreeBSD Wheezy
+# Installing rvm as root in ~root/.rvm on Debian GNU/kFreeBSD Wheezy
 #
 # Created by Joel Lopes Da Silva on 3/18/13.
 # Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
@@ -7,8 +7,9 @@
 cd ~root
 ln -s /debian-configuration-files/root/.rvmrc
 curl -L https://get.rvm.io | bash
-rm -f /etc/profile.d/rvm.sh /etc/rvmrc
-logout
+rm -f /etc/rvmrc
+source "$HOME/.rvm/scripts/rvm"
+rvm autolibs read
 rvm install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
 
 # System gemsets
@@ -17,5 +18,5 @@ rvm gemset use integrity_check
 gem install activerecord sqlite3
 
 # Uninstall
-rm -R -f /etc/profile.d/rvm.sh /etc/rvmrc /usr/local/rvm /usr/local/share/man/man1/rvm* ~root/.rvm ~root/.gem ~root/.rvmrc
+rm -R -f ~root/.rvm ~root/.gem ~root/.rvmrc
 
