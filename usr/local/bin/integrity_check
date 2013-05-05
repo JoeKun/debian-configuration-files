@@ -427,7 +427,7 @@ module IntegrityCheck
                 end
             end
             unless result
-                @ignored_resource_items_paths ||= [ @log_file_path, @database_directory_path ]
+                @ignored_resource_items_paths ||= [ @log_file_path, @database_directory_path, @old_database_file_path, @new_database_file_path ]
                 @ignored_resource_items_paths.each do |resource_item_path|
                     if path == resource_item_path
                         result = true
@@ -517,16 +517,20 @@ module IntegrityCheck
         end
         
         def handle_item(path)
+            
+            # Find item type
             item_type = nil
+            if File.symlink?(path)
+                item_type = :links
+            elsif File.directory?(path)
+                item_type = :directories
+            elsif File.file?(path)
+                item_type = :files
+            end
+            
+            # Proceed only if item type is supported and item isn't ignored.
             should_proceed = false
             unless should_ignore_item?(path)
-                if File.symlink?(path)
-                    item_type = :links
-                elsif File.directory?(path)
-                    item_type = :directories
-                elsif File.file?(path)
-                    item_type = :files
-                end
                 should_proceed = Capabilities.supported_item_types.include?(item_type)
             end
             if should_proceed
@@ -661,17 +665,18 @@ module IntegrityCheck
                 # Create new item record
                 add_item_to_persist(item_model_class_in_new_database.new(item_attributes), :save)
                 
-                # Recurse into children for directories
-                if item_type == :directories
-                    Dir.new(path).sort.each do |child_name|
-                        if child_name != "." and child_name != ".."
-                            child_path = File.join(path, child_name)
-                            handle_item(child_path)
-                        end
+            end
+            
+            # Recurse into children for directories
+            if item_type == :directories
+                Dir.new(path).sort.each do |child_name|
+                    if child_name != "." and child_name != ".."
+                        child_path = File.join(path, child_name)
+                        handle_item(child_path)
                     end
                 end
-                
             end
+            
         end
         
         def handle_root_paths
@@ -898,29 +903,29 @@ module IntegrityCheck
             FileUtilities.ensure_directory_exists(File.dirname(@log_file_path), 0755)
             
             # Create database directory if needed
-            new_database_file_path = ResourceLocator.database_file_path
-            @database_directory_path = File.dirname(new_database_file_path)
+            @new_database_file_path = ResourceLocator.database_file_path
+            @database_directory_path = File.dirname(@new_database_file_path)
             FileUtilities.ensure_directory_exists(@database_directory_path, 0700)
             
             # Mark previous database as old
-            database_file_extension = File.extname(new_database_file_path)
-            @new_database_file_name = File.basename(new_database_file_path, database_file_extension)
+            database_file_extension = File.extname(@new_database_file_path)
+            @new_database_file_name = File.basename(@new_database_file_path, database_file_extension)
             old_database_file_name = @new_database_file_name
             old_database_file_name += "-orig"
-            old_database_file_path = File.join(@database_directory_path, old_database_file_name + database_file_extension)
-            has_old_database = File.file?(new_database_file_path)
+            @old_database_file_path = File.join(@database_directory_path, old_database_file_name + database_file_extension)
+            has_old_database = File.file?(@new_database_file_path)
             if has_old_database
-                File.delete(old_database_file_path) if File.file?(old_database_file_path)
-                File.rename(new_database_file_path, old_database_file_path)
+                File.delete(@old_database_file_path) if File.file?(@old_database_file_path)
+                File.rename(@new_database_file_path, @old_database_file_path)
             end
             
             # Setup new database
-            NewDatabase::Manager.connect(:database_file_path => new_database_file_path, 
+            NewDatabase::Manager.connect(:database_file_path => @new_database_file_path, 
                                          :log_file_path      => @log_file_path)
             NewDatabase::Manager.create_regular_tables
             
             # Setup old database
-            OldDatabase::Manager.connect(:database_file_path => old_database_file_path, 
+            OldDatabase::Manager.connect(:database_file_path => @old_database_file_path, 
                                          :log_file_path      => @log_file_path)
             OldDatabase::Manager.create_regular_tables unless has_old_database
             OldDatabase::Manager.create_change_tracking_tables
@@ -936,7 +941,7 @@ module IntegrityCheck
             NewDatabase::Manager.disconnect
             
             # Delete old database
-            File.delete(old_database_file_path)
+            File.delete(@old_database_file_path)
             
             # Send change log if non empty
             change_log = change_log_data[:change_log]
