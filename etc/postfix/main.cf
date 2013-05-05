@@ -203,8 +203,8 @@ proxy_read_maps = $local_recipient_maps
                   $mynetworks
                   $virtual_mailbox_limit_maps
 
-# Maximum message size
-#message_size_limit = 51200000 # ~50 MB
+# Maximum message size: ~50 MB.
+message_size_limit = 51200000
 
 # Maximum lifetime of mails in the mail queue
 #bounce_queue_lifetime = 21d
