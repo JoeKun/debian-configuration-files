@@ -1,0 +1,956 @@
+#! /usr/bin/env ruby
+#
+#  integrity_check
+#
+#  Created by Joel Lopes Da Silva on 8/27/12.
+#  Copyright © 2012-2013 Joel Lopes Da Silva. All rights reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#  
+#        http://www.apache.org/licenses/LICENSE-2.0
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+# integrity_check: checks integrity of file system and report any modification
+#                  by email.
+# 
+# Requires ruby 2.0.0p0 and the following gems: activerecord sqlite3
+
+
+require "active_record"
+require "digest/sha1"
+require "etc"
+require "logger"
+require "net/smtp"
+require "yaml"
+
+
+module IntegrityCheck
+    
+    class Capabilities
+        def self.supported_item_types
+            [ :directories, :files, :links ]
+        end
+    end
+    
+    
+    class FileUtilities
+        
+        FILE_PATH_MAXIMUM_LENGTH    = 4096
+        PERMISSIONS_MAXIMUM_LENGTH  = 32
+        CHECK_SUM_MAXIMUM_LENGTH    = 256
+        
+        def self.compute_check_sum(path)
+            result = nil
+            begin
+                hash = Digest::SHA1.new
+                File.open(path) do |file|
+                    buffer = ""
+                    while not file.eof
+                        file.read(512, buffer)
+                        hash.update(buffer)
+                    end
+                end
+                result = hash.to_s
+            rescue
+            end
+            result
+        end
+        
+        def self.ensure_directory_exists(path, permissions_in_octal)
+            current_path = path
+            stack = []
+            until File.directory?(current_path)
+                stack.push(current_path)
+                current_path = File.dirname(current_path)
+            end
+            until stack.empty?
+                current_path = stack.pop
+                Dir.mkdir(current_path, permissions_in_octal)
+            end
+        end
+        
+    end
+    
+    
+    class ResourceLocator
+        
+        def self.locate_item_components(options = {})
+            
+            # Parse options
+            relative_directory_path = options[:relative_directory_path]
+            directory_uses_script_file_name = options[:directory_uses_script_file_name] || false
+            extension = options[:extension]
+            
+            # Parse script file path
+            script_file_path = File.expand_path($0)
+            script_directory_path = File.dirname(script_file_path)
+            script_file_extension = File.extname(script_file_path)
+            
+            # Compute relative file path
+            file_name = File.basename(script_file_path, script_file_extension)
+            if directory_uses_script_file_name
+                relative_directory_path = File.join(relative_directory_path, file_name)
+            end
+            file_name_with_extension = file_name
+            file_name_with_extension += extension if extension
+            relative_file_path = File.join(relative_directory_path, file_name_with_extension)
+            
+            # Find path prefix and absolute path
+            path_prefix = script_directory_path
+            absolute_path = File.join(path_prefix, relative_file_path)
+            done = false
+            until done or File.file?(absolute_path)
+                previous_path_prefix = path_prefix
+                path_prefix = File.dirname(path_prefix)
+                done = true if previous_path_prefix == path_prefix
+                path_prefix = script_directory_path if done
+                absolute_path = File.join(path_prefix, relative_file_path)
+            end
+            
+            # Build result
+            result = {
+                :absolute_path  => absolute_path,
+                :path_prefix    => path_prefix, 
+                :file_name      => file_name, 
+            }
+            result
+            
+        end
+        
+        def self.locate_item(options = {})
+            locate_item_components(options)[:absolute_path]
+        end
+        
+        def self.configuration_file_path_components
+            locate_item_components(:relative_directory_path => "etc", 
+                                   :extension               => ".conf")
+        end
+        
+        def self.configuration_file_path
+            configuration_file_path_components[:absolute_path]
+        end
+        
+        def self.smart_locate_item(options = {})
+            result = locate_item(options)
+            unless File.file?(result)
+                components = configuration_file_path_components
+                path_prefix = components[:path_prefix]
+                file_name = components[:file_name]
+                file_name_with_extension = file_name
+                file_name_with_extension += options[:extension] if options.has_key?(:extension)
+                if options.has_key?(:directory_uses_script_file_name) and options[:directory_uses_script_file_name]
+                    result = File.join(path_prefix, options[:relative_directory_path], file_name, file_name_with_extension)
+                else
+                    result = File.join(path_prefix, options[:relative_directory_path], file_name_with_extension)
+                end
+            end
+            result
+        end
+        
+        def self.log_file_path
+            smart_locate_item(:relative_directory_path  => File.join("var", "log"), 
+                              :extension                => ".log")
+        end
+        
+        def self.database_file_path
+            smart_locate_item(:relative_directory_path          => File.join("var", "lib"), 
+                              :directory_uses_script_file_name  => true, 
+                              :extension                        => ".db")
+        end
+                
+        private_class_method :locate_item_components, :locate_item, 
+                             :configuration_file_path_components, 
+                             :smart_locate_item
+        
+    end
+    
+    
+    
+    module OldDatabase
+        LOGGING_PREFIX = "Old: "
+        CHANGE_TYPES_TO_TABLE_NAME_PREFIXES = {
+            :deleted    => "", 
+            :added      => "added",
+            :modified   => "modified", 
+        }
+    end
+    
+    module NewDatabase
+        LOGGING_PREFIX = "New: "
+        CHANGE_TYPES_TO_TABLE_NAME_PREFIXES = { :none => "" }
+    end
+    
+    [ OldDatabase, NewDatabase ].each do |base_module|
+        
+        class base_module::Base < ActiveRecord::Base
+            
+            self.abstract_class = true
+            
+            def self.new(attributes = nil, options = {})
+                non_primary_attributes = attributes.clone
+                path = non_primary_attributes.delete(:path)
+                result = super(non_primary_attributes, options)
+                result.path = path
+                result
+            end
+            
+            def self.item_type
+                self.const_get(:ITEM_TYPE)
+            end
+            
+            def self.change_type
+                self.const_get(:CHANGE_TYPE)
+            end
+            
+        end
+        
+        
+        base_module::CHANGE_TYPES_TO_TABLE_NAME_PREFIXES.each do |change_type, prefix|
+            Capabilities.supported_item_types.each do |item_type|
+                table_name = item_type.to_s
+                table_name = prefix + "_" + table_name unless prefix.empty?
+                model_class = Class.new(base_module::Base) do
+                    self.primary_key = :path
+                    self.const_set(:ITEM_TYPE, item_type)
+                    self.const_set(:CHANGE_TYPE, change_type) unless change_type == :none
+                end
+                base_module.const_set(table_name.classify, model_class)
+            end
+        end
+        
+        
+        class base_module::Schema < ActiveRecord::Schema
+            self.verbose = false
+            def connection
+                base_module = self.class.parent
+                base_module::Base.connection
+            end
+        end
+        
+        
+        class base_module::Manager
+            
+            def self.base_module
+                self.parent
+            end
+            
+            def self.connect(options = {})
+                
+                # Parse options
+                log_file_path = options[:log_file_path]
+                database_file_path = options[:database_file_path]
+                
+                # Get base module
+                base_module = base_module()
+                
+                # Setup logger
+                base_module::Base.logger = Logger.new(log_file_path)
+                base_module::Base.logger.level = Logger::WARN
+                logging_prefix = base_module.const_get(:LOGGING_PREFIX)
+                original_formatter = Logger::Formatter.new
+                base_module::Base.logger.formatter = proc do |severity, datetime, program_name, message|
+                    logging_prefix + original_formatter.call(severity, datetime, program_name, message)
+                end
+                
+                # Establish connection
+                base_module::Base.establish_connection(:adapter  => "sqlite3", 
+                                                       :database => database_file_path)
+                
+            end
+            
+            def self.disconnect
+                base_module::Base.remove_connection
+            end
+            
+            def self.item_columns_parameters(item_type)
+                result = []
+                result << {
+                    :column_name => :path, 
+                    :description => "Path", 
+                    :data_type   => :string, 
+                    :options     => { :null => false, :limit => FileUtilities::FILE_PATH_MAXIMUM_LENGTH }
+                }
+                case item_type
+                when :files
+                    result << {
+                        :column_name => :check_sum, 
+                        :description => "Check sum", 
+                        :data_type   => :string, 
+                        :options     => { :null => false, :limit => FileUtilities::CHECK_SUM_MAXIMUM_LENGTH }
+                    }
+                when :links
+                    result << {
+                        :column_name => :target, 
+                        :description => "Target", 
+                        :data_type   => :string, 
+                        :options     => { :null => false, :limit => FileUtilities::FILE_PATH_MAXIMUM_LENGTH }
+                    }
+                end
+                result << {
+                    :column_name => :permissions, 
+                    :description => "Permissions", 
+                    :data_type   => :string, 
+                    :options     => { :null => false, :limit => FileUtilities::PERMISSIONS_MAXIMUM_LENGTH }
+                }
+                result << {
+                    :column_name => :uid, 
+                    :description => "Owner", 
+                    :data_type   => :integer, 
+                    :options     => { :null => false }
+                }
+                result << {
+                    :column_name => :gid, 
+                    :description => "Group", 
+                    :data_type   => :integer, 
+                    :options     => { :null => false }
+                }
+                result << {
+                    :column_name => :mtime, 
+                    :description => "Modification time", 
+                    :data_type   => :datetime, 
+                    :options     => { :null => false }
+                }
+                result << {
+                    :column_name => :ctime, 
+                    :description => "Inode change time", 
+                    :data_type   => :datetime, 
+                    :options     => { :null => false }
+                }
+                result
+            end
+            
+            def self.modified_item_columns_parameters(item_type)
+                result = []
+                item_columns_parameters(item_type).each do |column_parameters|
+                    column_name = column_parameters[:column_name]
+                    data_type = column_parameters[:data_type]
+                    options = column_parameters[:options]
+                    case column_name
+                    when :path
+                        result << { :column_name => column_name, :data_type => data_type, :options => options }
+                    else
+                        old_column_name = column_name.to_s.prepend("old_").to_sym
+                        new_column_name = column_name.to_s.prepend("new_").to_sym
+                        result << { :column_name => old_column_name, :data_type => data_type, :options => options }
+                        result << { :column_name => new_column_name, :data_type => data_type, :options => options }
+                    end
+                end
+                result
+            end
+            
+            def self.item_column_names(item_type)
+                item_columns_parameters(item_type).collect do |column_parameters|
+                    column_parameters[:column_name]
+                end
+            end
+            
+            def self.create_item_table(table_name, all_column_parameters)
+                base_module::Schema.define do
+                    create_table(table_name, :id => false) do |table|
+                        all_column_parameters.each do |column_parameters|
+                            table.column(column_parameters[:column_name], 
+                                         column_parameters[:data_type], 
+                                         column_parameters[:options])
+                        end
+                    end
+                    add_index(table_name, :path, :unique => true)
+                end
+            end
+            
+            def self.create_regular_tables
+                Capabilities.supported_item_types.each do |item_type|
+                    create_item_table(item_type, 
+                                      item_columns_parameters(item_type))
+                end
+            end
+            
+            def self.create_change_tracking_tables
+                Capabilities.supported_item_types.each do |item_type|
+                    base_module::CHANGE_TYPES_TO_TABLE_NAME_PREFIXES.each do |change_type, prefix|
+                        unless prefix.empty?
+                            table_name = prefix + "_" + item_type.to_s
+                            if change_type == :modified
+                                create_item_table(table_name.to_sym, 
+                                                  modified_item_columns_parameters(item_type))
+                            else
+                                create_item_table(table_name.to_sym, 
+                                                  item_columns_parameters(item_type))
+                            end
+                        end
+                    end
+                end
+            end
+            
+            private_class_method :base_module, :create_item_table, 
+                                 :modified_item_columns_parameters
+            
+        end
+        
+    end
+    
+    
+    class Checker
+        
+    private
+        
+        BATCH_SIZE_FOR_PERSISTING_ITEMS = 500
+        
+        def get_configuration_value(key)
+            @configuration ||= YAML.load_file(ResourceLocator.configuration_file_path)
+            @configuration[key]
+        end
+        
+        def should_ignore_item?(path)
+            if @ignored_items_regular_expressions.nil?
+                @ignored_items_regular_expressions = []
+                ignored_paths = get_configuration_value("ignored_paths")
+                unless ignored_paths.nil?
+                    ignored_paths.each do |ignored_path|
+                        r = Regexp.new(ignored_path)
+                        @ignored_items_regular_expressions << r
+                    end
+                end
+            end
+            result = false
+            @ignored_items_regular_expressions.each do |r|
+                if path =~ r
+                    result = true
+                    break
+                end
+            end
+            unless result
+                @ignored_resource_items_paths ||= [ @log_file_path, @database_directory_path ]
+                @ignored_resource_items_paths.each do |resource_item_path|
+                    if path == resource_item_path
+                        result = true
+                        break
+                    end
+                end
+            end
+            result
+        end
+        
+        def should_trust_timestamps_for_item?(path)
+            if @trust_timestamps_regular_expressions.nil?
+                @trust_timestamps_regular_expressions = []
+                trust_timestamps_for_paths = get_configuration_value("trust_timestamps_for_paths")
+                unless trust_timestamps_for_paths.nil?
+                    trust_timestamps_for_paths.each do |trust_timestamps_for_path|
+                        r = Regexp.new(trust_timestamps_for_path)
+                        @trust_timestamps_regular_expressions << r
+                    end
+                end
+            end
+            result = false
+            @trust_timestamps_regular_expressions.each do |r|
+                if path =~ r
+                    result = true
+                    break
+                end
+            end
+            result
+        end
+        
+        def add_item_to_persist(item, persist_action)
+            @items_to_persist ||= {}
+            items_to_persist_for_current_action = @items_to_persist[persist_action]
+            if items_to_persist_for_current_action.nil?
+                items_to_persist_for_current_action = {}
+                @items_to_persist[persist_action] = items_to_persist_for_current_action
+            end
+            item_class = item.class
+            items = items_to_persist_for_current_action[item_class]
+            if items.nil?
+                items = []
+                items_to_persist_for_current_action[item_class] = items
+            end
+            items << item
+            if items.length >= BATCH_SIZE_FOR_PERSISTING_ITEMS
+                flush_items_to_persist(item_class, persist_action)
+            end
+        end
+        
+        def flush_items_to_persist(item_class, persist_action)
+            unless @items_to_persist.nil?
+                items_to_persist_for_current_action = @items_to_persist[persist_action]
+                unless items_to_persist_for_current_action.nil?
+                    items = items_to_persist_for_current_action[item_class]
+                    item_class.transaction do
+                        items.each do |item|
+                            item.send(persist_action)
+                        end
+                    end
+                    items.clear
+                end
+            end
+        end
+        
+        def flush_all_items_to_persist
+            unless @items_to_persist.nil?
+                @items_to_persist.each do |persist_action, items_to_persist_for_current_action|
+                    items_to_persist_for_current_action.each do |item_class, items|
+                        item_class.transaction do
+                            items.each do |item|
+                                item.send(persist_action)
+                            end
+                        end
+                        items.clear
+                    end
+                end
+            end
+        end
+        
+        def formatted_value_for_identity_check(value, attribute_name)
+            result = value
+            if value.is_a?(Time)
+                result = "%.2f" % value.to_f
+            end
+            result
+        end
+        
+        def handle_item(path)
+            item_type = nil
+            should_proceed = false
+            unless should_ignore_item?(path)
+                if File.symlink?(path)
+                    item_type = :links
+                elsif File.directory?(path)
+                    item_type = :directories
+                elsif File.file?(path)
+                    item_type = :files
+                end
+                should_proceed = Capabilities.supported_item_types.include?(item_type)
+            end
+            if should_proceed
+                
+                # Find relevant model classes
+                change_types_to_table_name_prefixes = OldDatabase::CHANGE_TYPES_TO_TABLE_NAME_PREFIXES
+                item_table_name = item_type.to_s
+                modified_item_table_name = change_types_to_table_name_prefixes[:modified] + "_" + item_table_name
+                added_item_table_name = change_types_to_table_name_prefixes[:added] + "_" + item_table_name
+                item_model_class_in_new_database = NewDatabase.const_get(item_table_name.classify)
+                item_model_class_in_old_database = OldDatabase.const_get(item_table_name.classify)
+                modified_item_model_class = OldDatabase.const_get(modified_item_table_name.classify)
+                added_item_model_class = OldDatabase.const_get(added_item_table_name.classify)
+                
+                # Determine whether to trust timestamps for this item
+                should_trust_timestamps = should_trust_timestamps_for_item?(path)
+                
+                # Gather list of standard attributes
+                item_stat = File.lstat(path)
+                permissions = sprintf("%o", item_stat.mode)
+                check_sum = nil
+                target = nil
+                check_sum_fallback_value = "UNAVAILABLE"
+                case item_type
+                when :files
+                    unless should_trust_timestamps
+                        check_sum = FileUtilities.compute_check_sum(path) || check_sum_fallback_value
+                    end
+                when :links
+                    target = File.readlink(path)
+                end
+                item_attributes = {}
+                NewDatabase::Manager.item_column_names(item_type).each do |name|
+                    case name
+                    when :path
+                        item_attributes[:path] = path
+                    when :permissions
+                        item_attributes[:permissions] = permissions
+                    when :check_sum
+                        unless should_trust_timestamps
+                            item_attributes[:check_sum] = check_sum
+                        end
+                    when :target
+                        item_attributes[:target] = target
+                    else
+                        item_attributes[name] = item_stat.send(name)
+                    end
+                end
+                
+                # Find corresponding previous item
+                previous_item = item_model_class_in_old_database.where(:path => path).first
+                if previous_item
+                    
+                    # Determine whether item was modified
+                    item_was_modified = false
+                    NewDatabase::Manager.item_column_names(item_type).each do |name|
+                        case name
+                        when :path
+                            next
+                        when :permissions
+                            item_was_modified = (previous_item.permissions != permissions)
+                        when :check_sum
+                            unless should_trust_timestamps
+                                item_was_modified = (previous_item.check_sum != check_sum)
+                            end
+                        when :target
+                            item_was_modified = (previous_item.target != target)
+                        else
+                            previous_value = formatted_value_for_identity_check(previous_item.send(name), name)
+                            current_value  = formatted_value_for_identity_check(item_stat.send(name), name)
+                            item_was_modified = (previous_value != current_value)
+                        end
+                        break if item_was_modified
+                    end
+                    
+                    # Add modified log record to old database if appropriate
+                    if item_was_modified
+                        if item_type == :files and should_trust_timestamps
+                            check_sum = FileUtilities.compute_check_sum(path) || check_sum_fallback_value
+                        end
+                        modified_item_attributes = {}
+                        NewDatabase::Manager.item_column_names(item_type).each do |name|
+                            case name
+                            when :path
+                                modified_item_attributes[:path] = path
+                            when :permissions
+                                modified_item_attributes[:old_permissions] = previous_item.permissions
+                                modified_item_attributes[:new_permissions] = permissions
+                            when :check_sum
+                                modified_item_attributes[:old_check_sum] = previous_item.check_sum
+                                modified_item_attributes[:new_check_sum] = check_sum
+                            when :target
+                                modified_item_attributes[:old_target] = previous_item.target
+                                modified_item_attributes[:new_target] = target
+                            else
+                                old_name = name.to_s.prepend("old_").to_sym
+                                new_name = name.to_s.prepend("new_").to_sym
+                                modified_item_attributes[old_name] = previous_item.send(name)
+                                modified_item_attributes[new_name] = item_stat.send(name)
+                            end
+                        end
+                        add_item_to_persist(modified_item_model_class.new(modified_item_attributes), :save)
+                        
+                    else
+                        if item_type == :files and should_trust_timestamps
+                            check_sum = previous_item.check_sum
+                        end
+                    end
+                    
+                    # Remove previous item from old database
+                    # to avoid reporting the item as deleted.
+                    add_item_to_persist(previous_item, :delete)
+                    
+                    # Add checksum to attributes
+                    if item_type == :files
+                        item_attributes[:check_sum] = check_sum
+                    end
+                    
+                else
+                    
+                    # Add check sum to attributes if appropriate
+                    if item_type == :files and should_trust_timestamps
+                        check_sum = FileUtilities.compute_check_sum(path) || check_sum_fallback_value
+                        item_attributes[:check_sum] = check_sum
+                    end
+                    
+                    # Item record was not found in old database, this is a new item.
+                    add_item_to_persist(added_item_model_class.new(item_attributes), :save)
+                    
+                end
+                
+                # Create new item record
+                add_item_to_persist(item_model_class_in_new_database.new(item_attributes), :save)
+                
+                # Recurse into children for directories
+                if item_type == :directories
+                    Dir.new(path).sort.each do |child_name|
+                        if child_name != "." and child_name != ".."
+                            child_path = File.join(path, child_name)
+                            handle_item(child_path)
+                        end
+                    end
+                end
+                
+            end
+        end
+        
+        def handle_root_paths
+            root_paths = get_configuration_value("root_paths")
+            root_paths.each do |root_path|
+                handle_item(root_path)
+            end
+            flush_all_items_to_persist
+        end
+        
+        def formatted_value_for_change_log(name, value)
+            result = nil
+            case name
+            when :path
+                result = value.inspect
+            when :permissions
+                result = value[-4..-1]
+            when :uid
+                begin
+                    result = Etc.getpwuid(value).name
+                    result += " (#{value})"
+                rescue ArgumentError
+                    result = value.to_s
+                end
+            when :gid
+                begin
+                    result = Etc.getgrgid(value).name
+                    result += " (#{value})"
+                rescue ArgumentError
+                    result = value.to_s
+                end
+            when :target
+                result = value.inspect
+            else
+                result = value.to_s
+            end
+            result
+        end
+        
+        def formatted_attribute_for_change_log(options = {})
+            
+            # Parse options
+            name = options[:name]
+            description = options[:description] || name.to_s
+            current_value = options[:current_value]
+            previous_value = options[:previous_value]
+            description_maximum_length = options[:description_maximum_length] || description.length
+            
+            # Build formatted string
+            formatted_value = formatted_value_for_change_log(name, current_value)
+            spacing = " " * (description_maximum_length + 1 - description.length)
+            result = nil
+            if previous_value.nil?
+                result = "#{description}:#{spacing}#{formatted_value}"
+            else
+                previous_formatted_value = formatted_value_for_change_log(name, previous_value)
+                result = "#{description}:#{spacing}#{previous_formatted_value} => #{formatted_value}"
+            end
+            result
+            
+        end
+        
+        def sorted_change_types
+            [ :deleted, :added, :modified ]
+        end
+        
+        def generate_change_log
+            
+            # TODO: format change log as HTML with tables
+            
+            # Gather list of change log record classes sorted logically
+            change_log_record_classes = OldDatabase::Base.descendants
+            sorted_item_types = Capabilities.supported_item_types
+            change_log_record_classes.sort_by! do |model_class|
+                change_type = model_class.change_type
+                item_type = model_class.item_type
+                index = sorted_change_types.index(change_type)
+                index *= sorted_item_types.length
+                index += sorted_item_types.index(item_type)
+                index 
+            end
+            
+            # Log changes
+            change_counts = {
+                :added      => 0, 
+                :modified   => 0, 
+                :deleted    => 0, 
+            }
+            change_log = ""
+            change_log_record_classes.each do |model_class|
+                item_type = model_class.item_type
+                change_type = model_class.change_type
+                change_type_description = change_type.to_s.capitalize
+                item_type_description = item_type.to_s.singularize
+                model_class.find_each do |item|
+                    
+                    # Append change log for current item
+                    header = "#{change_type_description} #{item_type_description}"
+                    change_log << header + "\n"
+                    change_log << ("-" * header.length) + "\n"
+                    all_item_column_parameters = OldDatabase::Manager.item_columns_parameters(item_type)
+                    column_parameters_with_longest_description = all_item_column_parameters.max_by do |column_parameters|
+                        column_parameters[:description].length
+                    end
+                    description_maximum_length = column_parameters_with_longest_description[:description].length
+                    all_item_column_parameters.each do |column_parameters|
+                        column_name = column_parameters[:column_name]
+                        if change_type == :modified
+                            if column_name == :path
+                                change_log << formatted_attribute_for_change_log(
+                                    :name                       => column_name, 
+                                    :description                => column_parameters[:description], 
+                                    :current_value              => item.send(column_name), 
+                                    :description_maximum_length => description_maximum_length
+                                )
+                                change_log << "\n"
+                            else
+                                old_column_name = column_name.to_s.prepend("old_").to_sym
+                                new_column_name = column_name.to_s.prepend("new_").to_sym
+                                old_value = item.send(old_column_name)
+                                new_value = item.send(new_column_name)
+                                if old_value != new_value
+                                    change_log << formatted_attribute_for_change_log(
+                                        :name                       => column_name, 
+                                        :description                => column_parameters[:description], 
+                                        :previous_value             => old_value, 
+                                        :current_value              => new_value, 
+                                        :description_maximum_length => description_maximum_length
+                                    )
+                                    change_log << "\n"
+                                end
+                            end
+                        else
+                            change_log << formatted_attribute_for_change_log(
+                                :name                       => column_name, 
+                                :description                => column_parameters[:description], 
+                                :current_value              => item.send(column_name), 
+                                :description_maximum_length => description_maximum_length
+                            )
+                            change_log << "\n"
+                        end
+                    end
+                    change_log << "\n"
+                    
+                    # Increment relevant counter
+                    change_count = change_counts[change_type]
+                    change_count += 1
+                    change_counts[change_type] = change_count
+                    
+                end
+            end
+            { :change_log => change_log, :change_counts => change_counts }
+            
+        end
+        
+        def send_change_log(change_log, change_counts)
+            
+            # Get machine name
+            fully_qualified_domain_name = Socket.gethostname
+            machine_name = fully_qualified_domain_name.split(".").first.capitalize
+            
+            # Find sender and recipient
+            fallback_name = "#{machine_name}'s Administrator"
+            from_address = get_configuration_value("from_address")
+            from_name = get_configuration_value("from_name") || fallback_name
+            to_address = get_configuration_value("to_address")
+            to_name = get_configuration_value("to_name") || fallback_name
+            
+            # Compute subject line
+            subject_line = "#{machine_name} file system changes: "
+            formatted_change_counts = []
+            sorted_change_types.each do |change_type|
+                change_count = change_counts[change_type]
+                if change_count > 0
+                    formatted_change_counts << "#{change_count} #{change_type}"
+                end
+            end
+            subject_line += formatted_change_counts.join(", ")
+            
+            # Put together full message
+            header =  "From: #{from_name} <#{from_address}>\n"
+            header << "To: #{to_name} <#{to_address}>\n"
+            header << "Subject: #{subject_line}\n"
+            signature = "-- \n#{from_name}\n"
+            message = "#{header}\n#{change_log}#{signature}"
+            
+            # Send message
+            begin
+                Net::SMTP.start("localhost") do |smtp|
+                    smtp.send_message(message, from_address, to_address)
+                end
+            rescue Exception => e
+                current_time = Time.now
+                timestamp = current_time.getutc.strftime("%Y-%m-%d_%H-%M-%S_UTC")
+                message_file_name = "#{@new_database_file_name}_change_log_#{fully_qualified_domain_name}_#{timestamp}.txt"
+                message_file_path = File.join(@database_directory_path, message_file_name)
+                File.open(message_file_path, "w") do |file|
+                    file.write(message)
+                end
+                if e.is_a?(Net::SMTPFatalError) and e.message.start_with?(552.to_s)
+                    shorter_message_body =  "Failed sending change log at #{current_time} with error message: \n"
+                    shorter_message_body << "\t#{e.class}: #{e.message}\n"
+                    shorter_message_body << "\n"
+                    shorter_message_body << "Full change log was stored on #{fully_qualified_domain_name} at location: \n"
+                    shorter_message_body << "\t#{message_file_path}\n"
+                    shorter_message = "#{header}\n#{shorter_message_body}#{signature}"
+                    begin
+                        Net::SMTP.start("localhost") do |smtp|
+                            smtp.send_message(shorter_message, from_address, to_address)
+                        end
+                    rescue
+                    end
+                end
+            end
+        end
+        
+        
+    public
+        
+        def run
+            
+            # Create log directory if needed
+            @log_file_path = ResourceLocator.log_file_path
+            FileUtilities.ensure_directory_exists(File.dirname(@log_file_path), 0755)
+            
+            # Create database directory if needed
+            new_database_file_path = ResourceLocator.database_file_path
+            @database_directory_path = File.dirname(new_database_file_path)
+            FileUtilities.ensure_directory_exists(@database_directory_path, 0700)
+            
+            # Mark previous database as old
+            database_file_extension = File.extname(new_database_file_path)
+            @new_database_file_name = File.basename(new_database_file_path, database_file_extension)
+            old_database_file_name = @new_database_file_name
+            old_database_file_name += "-orig"
+            old_database_file_path = File.join(@database_directory_path, old_database_file_name + database_file_extension)
+            has_old_database = File.file?(new_database_file_path)
+            if has_old_database
+                File.delete(old_database_file_path) if File.file?(old_database_file_path)
+                File.rename(new_database_file_path, old_database_file_path)
+            end
+            
+            # Setup new database
+            NewDatabase::Manager.connect(:database_file_path => new_database_file_path, 
+                                         :log_file_path      => @log_file_path)
+            NewDatabase::Manager.create_regular_tables
+            
+            # Setup old database
+            OldDatabase::Manager.connect(:database_file_path => old_database_file_path, 
+                                         :log_file_path      => @log_file_path)
+            OldDatabase::Manager.create_regular_tables unless has_old_database
+            OldDatabase::Manager.create_change_tracking_tables
+            
+            # Populate new database and change tracking tables
+            handle_root_paths
+            
+            # Generate change log before disconnecting from databases
+            change_log_data = generate_change_log
+            
+            # Disconnect
+            OldDatabase::Manager.disconnect
+            NewDatabase::Manager.disconnect
+            
+            # Delete old database
+            File.delete(old_database_file_path)
+            
+            # Send change log if non empty
+            change_log = change_log_data[:change_log]
+            unless change_log.empty?
+                send_change_log(change_log, change_log_data[:change_counts])
+            end
+            
+        end
+    
+    end
+    
+end
+
+
+
+IntegrityCheck::Checker.new.run
+
