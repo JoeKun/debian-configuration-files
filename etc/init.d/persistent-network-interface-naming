@@ -29,11 +29,11 @@
 #             /etc/network/persistent-network-interface-naming
 #   # insserv --dryrun persistent-network-interface-naming
 #   # insserv --verbose persistent-network-interface-naming
-#   # /etc/init.d/persistent-network-interface-naming start
+#   # service persistent-network-interface-naming start
 # 
 # To uninstall:
 # 
-#   # /etc/init.d/persistent-network-interface-naming stop
+#   # service persistent-network-interface-naming stop
 #   # insserv --dryrun --remove persistent-network-interface-naming
 #   # insserv --verbose --remove persistent-network-interface-naming
 #   # rm -f /etc/{init.d,network}/persistent-network-interface-naming

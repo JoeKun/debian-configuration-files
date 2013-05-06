@@ -27,11 +27,11 @@
 #   # cp /path/to/devfs-ruleset-assigning /etc/init.d
 #   # insserv --dryrun devfs-ruleset-assigning
 #   # insserv --verbose devfs-ruleset-assigning
-#   # /etc/init.d/devfs-ruleset-assigning start
+#   # service devfs-ruleset-assigning start
 # 
 # To uninstall:
 # 
-#   # /etc/init.d/devfs-ruleset-assigning stop
+#   # service devfs-ruleset-assigning stop
 #   # insserv --dryrun --remove devfs-ruleset-assigning
 #   # insserv --verbose --remove devfs-ruleset-assigning
 #   # rm -f /etc/init.d/devfs-ruleset-assigning

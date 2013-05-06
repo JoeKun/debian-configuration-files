@@ -27,11 +27,11 @@
 #   # cp /path/to/devfs-rulesets /etc/init.d
 #   # insserv --dryrun devfs-rulesets
 #   # insserv --verbose devfs-rulesets
-#   # /etc/init.d/devfs-rulesets start
+#   # service devfs-rulesets start
 # 
 # To uninstall:
 # 
-#   # /etc/init.d/devfs-rulesets stop
+#   # service devfs-rulesets stop
 #   # insserv --dryrun --remove devfs-rulesets
 #   # insserv --verbose --remove devfs-rulesets
 #   # rm -f /etc/init.d/devfs-rulesets
