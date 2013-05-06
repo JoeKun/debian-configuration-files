@@ -1,0 +1,152 @@
+#! /bin/sh
+# 
+# /etc/init.d/pf
+# 
+# Created by Joel Lopes Da Silva on 4/5/13.
+# Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+
+#----------------------------------------------------------------------
+# Documentation
+#----------------------------------------------------------------------
+
+# To install:
+# 
+#   # cp /path/to/pf /etc/init.d
+#   # insserv --dryrun pf
+#   # insserv --verbose pf
+#   # service pf start
+# 
+# To uninstall:
+# 
+#   # service pf stop
+#   # insserv --dryrun --remove pf
+#   # insserv --verbose --remove pf
+#   # rm -f /etc/init.d/pf
+
+# This script conforms to the LSB specification.
+# Cf. http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+
+
+#----------------------------------------------------------------------
+# LSB information
+#----------------------------------------------------------------------
+
+### BEGIN INIT INFO
+# Provides:          pf
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Should-Start:      persistent-network-interface-naming
+# Should-Stop:       persistent-network-interface-naming
+# Default-Start:     S
+# Default-Stop:      0 6
+# X-Start-Before:    networking
+# X-Stop-After:      networking
+# Short-Description: Packet Filter.
+# Description:       Packet Filter startup script for Debian GNU/kFreeBSD.
+### END INIT INFO
+
+# Define LSB log_* functions.
+. /lib/lsb/init-functions
+
+
+#----------------------------------------------------------------------
+# Service description
+#----------------------------------------------------------------------
+
+HUMAN_READABLE_SERVICE_NAME="Packet Filter"
+
+
+#----------------------------------------------------------------------
+# Utility functions
+#----------------------------------------------------------------------
+
+do_start() {
+    result=0
+    if [ -n "`pfctl -si | head -n 1 | grep -e '^Status: Enabled'`" ]
+    then
+        log_warning_msg "already enabled."
+    else
+        pfctl -ef /etc/pf.conf > /dev/null 2>&1
+        result=$?
+    fi
+    return $result
+}
+
+do_stop() {
+    if [ -n "`pfctl -si | head -n 1 | grep -e '^Status: Enabled'`" ]
+    then
+        pfctl -d > /dev/null 2>&1
+    else
+        log_warning_msg "already disabled."
+    fi
+    return 0
+}
+
+print_usage() {
+    echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+}
+
+
+#----------------------------------------------------------------------
+# Parse command line options and perform requested work
+#----------------------------------------------------------------------
+
+result=0
+case "$1" in
+    start)
+        log_action_begin_msg "Starting $HUMAN_READABLE_SERVICE_NAME"
+        do_start
+        result=$?
+        log_action_end_msg $result
+        ;;
+    stop)
+        log_action_begin_msg "Stopping $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+        log_action_end_msg $result
+        ;;
+    restart|force-reload)
+        log_action_begin_msg "Restarting $HUMAN_READABLE_SERVICE_NAME"
+        do_stop
+        result=$?
+        if [ $result -eq 0 ]
+        then
+            do_start
+            result=$?
+        fi
+        log_action_end_msg $result
+        ;;
+    status)
+        if [ -n "`pfctl -si | head -n 1 | grep -e '^Status: Enabled'`" ]
+        then
+            log_success_msg "$HUMAN_READABLE_SERVICE_NAME is enabled"
+        else
+            log_failure_msg "$HUMAN_READABLE_SERVICE_NAME is disabled"
+            result=3 # service is not running
+        fi
+        ;;
+    reload|try-restart)
+        print_usage
+        result=3 # unimplemented feature
+        ;;
+    *)
+        print_usage
+        result=2 # invalid or excess arguments
+        ;;
+esac
+
+exit $result
+
