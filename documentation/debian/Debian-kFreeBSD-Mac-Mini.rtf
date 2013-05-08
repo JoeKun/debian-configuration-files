@@ -1,4 +1,4 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf380
+{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf390
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Monaco;}
 {\colortbl;\red255\green255\blue255;}
 {\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
@@ -221,7 +221,7 @@ We need to make room for Debian at the end of the main disk. Interestingly, when
 \f1\fs22 mkdir /target\
 \ls8\ilvl0
 \f0\fs24 {\listtext	2.	}
-\f1\fs22 zpool create -o altroot=/target -o cache file=/tmp/zpool.cache system /dev/gpt/system
+\f1\fs22 zpool create -o altroot=/target -o cachefile=/tmp/zpool.cache system /dev/gpt/system
 \f0\fs24 \
 {\listtext	3.	}
 \f1\fs22 zpool set bootfs=system system
@@ -301,7 +301,11 @@ We need to make room for Debian at the end of the main disk. Interestingly, when
 {\listtext	7.	}
 \f1\fs22 passwd
 \f0\fs24 \
-{\listtext	8.	}Fill /etc/fstab. TODO: contents.\
+{\listtext	8.	}Fill 
+\f1\fs22 /etc/fstab
+\f0\fs24 . See example in 
+\f1\fs22 /path/to/debian-configuration-files/etc/fstab
+\f0\fs24 \
 {\listtext	9.	}
 \f1\fs22 aptitude update\
 \ls10\ilvl0
@@ -326,9 +330,10 @@ We need to make room for Debian at the end of the main disk. Interestingly, when
 \
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 
-\b TODO
+\b \cf0 TODO
 \b0 : explain setup of FreeBSD volume with appropriate boot.efi; for now, have to use refit and configure it to automatically pick "Linux", which is how we point refit to the USB drive\
 In the near future, we should be able to skip refit altogether, thanks to some amazing work done to allow FreeBSD to boot from EFI on amd64 architectures; cf. https://wiki.freebsd.org/UEFI\
-We we do this, I expect we will be able to have a single boot.efi that directly boots FreeBSD without the need for GRUB nor the USB drive.\
+When we do this, I expect we will be able to have a single boot.efi that directly boots FreeBSD without the need for GRUB nor the USB drive.\
 }
