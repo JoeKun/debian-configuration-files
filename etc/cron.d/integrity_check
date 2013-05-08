@@ -1,5 +1,6 @@
-#
-#  SpamAssassin maintenance for amavisd-new
-#
+# /etc/cron.d/integrity_check
+
+# Run integrity_check every day at 4:00 AM.
+
 # m h dom mon dow user  command
 0 4 * * * root bash -l -c "source ~root/.rvm/scripts/rvm ; rvm use 2.0.0@integrity_check > /dev/null ; integrity_check"
