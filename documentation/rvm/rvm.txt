@@ -6,8 +6,8 @@
 # Install
 cd ~root
 ln -s /debian-configuration-files/root/.rvmrc
-curl -L https://get.rvm.io | bash
-rm -f /etc/rvmrc
+curl -L https://get.rvm.io | bash -s stable
+rm -f /etc/rvmrc /etc/profile.d/rvm.sh 
 source "$HOME/.rvm/scripts/rvm"
 rvm autolibs read
 rvm install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
