@@ -1,0 +1,9 @@
+# /etc/cron.d/zfs_backup
+
+# Custom PATH
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Run zfs_backup every day at 3:30 AM.
+
+# m h dom mon dow user  command
+30 3 * * * root zfs_backup --silent

@@ -1,0 +1,190 @@
+#! /bin/bash
+#
+#  zfs_backup
+#
+#  Created by Joel Lopes Da Silva on 5/13/13.
+#  Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#  
+#        http://www.apache.org/licenses/LICENSE-2.0
+#  
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+
+# zfs_backup: perform backups of ZFS dataset, compresses them, encrypts them 
+#             and splits them into chunks before sending them to remote 
+#             machine; performs full backup for the first time, and 
+#             incremental backups for subsequent invocations.
+# 
+# Requires zfs, bash, grep, basename, hostname, date, sed, tee, shasum, bzip2, openssl, split.
+# This was only tested on Debian GNU/kFreeBSD Wheezy.
+# 
+# Instructions for restoring:
+# zpool create data/backup_destination
+# umount data/backup_destination
+# cat ${dump_file_path}.bz2.enc-part-* | openssl enc -${openssl_cipher} -d -pass "file:${openssl_encryption_password_file_path}" | bzip2 --decompress --stdout | zfs receive -Fduv data/backup_destination
+
+
+#-----------------------------------------------------------
+# Loading configuration
+#-----------------------------------------------------------
+
+# Find configuration file
+script_name=$(basename "$0")
+configuration_file_path="/etc/${script_name}.conf"
+
+# Utility function for bailing for any reason
+function bail_with_error_message() {
+    echo "Error: ${1}."
+    exit 1
+}
+
+# Utility function for bailing if a required variable is missing
+function require_configuration_variable() {
+    [ -z "${!1}" ] && bail_with_error_message "${1} not specified in ${configuration_file_path}"
+}
+
+# Actually loading
+[ -f "${configuration_file_path}" ] || bail_with_error_message "missing configuration file; expected at ${configuration_file_path}"
+source "${configuration_file_path}"
+
+# Checking dataset_to_backup
+require_configuration_variable dataset_to_backup
+zfs list -H -o name | grep "^${dataset_to_backup}$" > /dev/null || bail_with_error_message "ZFS dataset named \"${dataset_to_backup}\" doesn't exist"
+
+# Checking temporary_storage_location
+require_configuration_variable temporary_storage_location
+[ -d "${temporary_storage_location}" ] || mkdir --parents "${temporary_storage_location}"
+[ -w "${temporary_storage_location}" ] || bail_with_error_message "can't write to temporary storage location ${temporary_storage_location}"
+
+# Checking openssl_cipher
+[ -n "${openssl_cipher}" ] || openssl_cipher="aes-256-cbc"
+openssl list-cipher-algorithms | grep -i "^${openssl_cipher}$" > /dev/null || bail_with_error_message "OpenSSL cipher ${openssl_cipher} is not supported on this machine."
+
+# Checking openssl_encryption_password_file_path
+require_configuration_variable openssl_encryption_password_file_path
+[ -f "${openssl_encryption_password_file_path}" ] || bail_with_error_message "missing OpenSSL encryption password file; expected at path ${openssl_encryption_password_file_path}"
+openssl_encryption_password=$(cat "${openssl_encryption_password_file_path}")
+[ -n "${openssl_encryption_password}" ] || bail_with_error_message "OpenSSL encryption password file ${openssl_encryption_password_file_path} was empty"
+unset openssl_encryption_password
+
+# Checking split_files_size
+require_configuration_variable split_files_size
+
+
+#-----------------------------------------------------------
+# Parsing command line arguments
+#-----------------------------------------------------------
+
+silent=0
+for argument in "$@"
+do
+    case $argument in
+        -s|--silent)
+            silent=1
+            ;;
+        *)
+            ;;
+    esac
+done
+
+
+#-----------------------------------------------------------
+# Logging routines
+#-----------------------------------------------------------
+
+function log_step_began() {
+    [ $silent -eq 0 ] && echo -n "$1... "
+}
+
+function log_step_ended() {
+    [ $silent -eq 0 ] && echo "done."
+}
+
+
+#-----------------------------------------------------------
+# Other constants
+#-----------------------------------------------------------
+
+snapshot_name_prefix="backup_"
+machine_name=$(hostname --short)
+last_backup_snapshot_user_property="${machine_name}:last_backup_snapshot"
+date_components=$(date +"%Y_%m_%d__%H_%M_%S")
+year=$(echo "$date_components" | cut -d "_" -f 1)
+month=$(echo "$date_components" | cut -d "_" -f 2)
+day=$(echo "$date_components" | cut -d "_" -f 3)
+formatted_date=$(echo "$date_components" | sed "s/_\([^_]\)/\1/g")
+new_snapshot_name="${snapshot_name_prefix}${formatted_date}"
+
+
+#-----------------------------------------------------------
+# Backup work
+#-----------------------------------------------------------
+
+# Create new snapshot
+log_step_began "Creating snapshot ${dataset_to_backup}@${new_snapshot_name}"
+zfs snapshot -r "${dataset_to_backup}@${new_snapshot_name}"
+log_step_ended
+
+# Find last backup snapshot and build dump file path
+last_backup_snapshot_name=$(zfs get -H -o value "${last_backup_snapshot_user_property}" "${dataset_to_backup}")
+if [ "${last_backup_snapshot_name}" != "-" ] && ! zfs list -H -o name -t snapshot | grep "^${dataset_to_backup}@${last_backup_snapshot_name}$" > /dev/null
+then
+    echo "Warning: couldn't find snapshot ${dataset_to_backup}@${last_backup_snapshot_name}; falling back to full backup."
+    last_backup_snapshot_name="-"
+fi
+dump_file_directory_path="${temporary_storage_location}/${year}/${month}/${day}"
+mkdir --parents "${dump_file_directory_path}"
+dump_file_name=$(echo "${machine_name}_${dataset_to_backup}" | sed "s/\//:/g")
+if [ "${last_backup_snapshot_name}" != "-" ]
+then
+    dump_file_name="${dump_file_name}@${last_backup_snapshot_name}-${new_snapshot_name}-incremental.zdump"
+else
+    dump_file_name="${dump_file_name}@${new_snapshot_name}-full.zdump"
+fi
+dump_file_path="${dump_file_directory_path}/${dump_file_name}"
+
+# Dump ZFS dataset information and post process it
+log_step_began "Dumping to ${dump_file_path}"
+if [ "${last_backup_snapshot_name}" != "-" ]
+then
+    zfs send -R -I "${dataset_to_backup}@${last_backup_snapshot_name}" "${dataset_to_backup}@${new_snapshot_name}"
+else
+    zfs send -R "${dataset_to_backup}@${new_snapshot_name}"
+fi | \
+    tee >( shasum --algorithm 1 | cut -d " " -f 1 > "${dump_file_path}.sha1" ) | \
+    bzip2 --compress --stdout | \
+    openssl enc -${openssl_cipher} -e -pass "file:${openssl_encryption_password_file_path}" | \
+    split --bytes=${split_files_size} --numeric-suffixes - "${dump_file_path}.bz2.enc.part-"
+log_step_ended
+
+# Destroy old snapshot
+if [ "${last_backup_snapshot_name}" != "-" ]
+then
+    log_step_began "Destroying old snapshot ${dataset_to_backup}@${last_backup_snapshot_name}"
+    zfs destroy -r "${dataset_to_backup}@${last_backup_snapshot_name}"
+    log_step_ended
+fi
+
+# Mark new snapshot as last backup snapshot
+log_step_began "Marking ${new_snapshot_name} as last backup snapshot"
+zfs set "${last_backup_snapshot_user_property}=${new_snapshot_name}" "${dataset_to_backup}"
+log_step_ended
+
+# FIXME: Actually scp files over to a remote server
+log_step_began "Moving ${dump_file_path} to /data/backups/${year}/${month}/${day}"
+mkdir --parents "/data/backups/${year}/${month}/${day}"
+pushd "${dump_file_directory_path}" > /dev/null
+cp -a ${dump_file_name}* "/data/backups/${year}/${month}/${day}"
+rm -f ${dump_file_name}*
+popd > /dev/null
+rmdir --parents --ignore-fail-on-non-empty "${dump_file_directory_path}"
+log_step_ended
+
