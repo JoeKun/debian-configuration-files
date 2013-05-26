@@ -6,4 +6,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 # Run zfs_backup every day at 3:30 AM.
 
 # m h dom mon dow user  command
-30 3 * * * root zfs_backup --silent
+30 3 * * * root zfs_backup --compression-algorithm=bzip2 --encryption-password-file=/root/confidential/backup_encryption_password --encryption-algorithm=aes-256-cbc --split-files-size=100m --temporary-storage-directory=/backups --silent system
