@@ -15,8 +15,8 @@
     ServerAdmin gitlab@foo.com
     
     # Proxy
-    ProxyPass / http://127.0.0.1:9292/
-    ProxyPassReverse / http://127.0.0.1:9292/
+    ProxyPass / http://127.0.0.1:8080/
+    ProxyPassReverse / http://127.0.0.1:8080/
     ProxyPreserveHost On
     
     # Log configuration
