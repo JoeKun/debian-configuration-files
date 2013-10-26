@@ -1,0 +1,22 @@
+# GitLab logrotate settings
+# based on: http://stackoverflow.com/a/4883967
+
+/var/lib/git/gitlab/log/*.log {
+    weekly
+    missingok
+    rotate 52
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+}
+
+/var/lib/git/gitlab-shell/gitlab-shell.log {
+    weekly
+    missingok
+    rotate 52
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+}
