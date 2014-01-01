@@ -1,0 +1,15 @@
+diff --git a/lib/tasks/gitlab/check.rake b/lib/tasks/gitlab/check.rake
+index 20d5f03..d56b5af 100644
+--- a/lib/tasks/gitlab/check.rake
++++ b/lib/tasks/gitlab/check.rake
+@@ -676,7 +676,9 @@ namespace :gitlab do
+     end
+ 
+     def sidekiq_process_count
+-      `ps ux`.scan(/sidekiq \d+\.\d+\.\d+/).count
++      sidekiq_pid_file_path = Rails.root.join('tmp', 'pids', 'sidekiq.pid')
++      sidekiq_pid = `cat #{sidekiq_pid_file_path}`.strip
++      `ps ux`.scan(/\s#{sidekiq_pid}\s/).count
+     end
+   end
+ 

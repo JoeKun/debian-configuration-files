@@ -60,3 +60,7 @@ ln -s /debian-configuration-files/etc/default/gitlab
 # Instead of update-rc.d
 insserv --verbose gitlab
 
+# Fix running check
+cd ~git/gitlab
+patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-fix-sidekiq-running-check-Debian-GNU-kFreeBSD.patch
+
