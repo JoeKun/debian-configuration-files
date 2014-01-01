@@ -15,25 +15,34 @@
 #-----------------------------------------------------------
 
 # Prints information about the system
-uname -a
-uptime
+if (( ${ECHO_SYSTEM_INFORMATION_UPON_LOGIN_DISABLED:=0} == 0 ))
+then
+    uname -a
+    uptime
+fi
 
 # Accept messages from other users
-mesg y
+if (( ${ACCEPT_MESSAGES_FROM_OTHER_USERS_DISABLED:=0} == 0 ))
+then
+    mesg y
+fi
 
 
 #-----------------------------------------------------------
 # Welcome message
 #-----------------------------------------------------------
 
-[[ -z "${LOGIN_GREETING_NAME:-}" ]] && export LOGIN_GREETING_NAME="$USER"
-
-login_greeting_figlet_options=""
-(( ${LOGIN_GREETING_SLANTED_TEXT_DISABLED:=0} == 0 )) && login_greeting_figlet_options=("-f" "slant")
-echo
-figlet -c -t ${login_greeting_figlet_options[@]} "Hello $LOGIN_GREETING_NAME"
-echo
-unset login_greeting_figlet_options
+if (( ${LOGIN_GREETING_DISABLED:=0} == 0 ))
+then
+    [[ -z "${LOGIN_GREETING_NAME:-}" ]] && export LOGIN_GREETING_NAME="$USER"
+    
+    login_greeting_figlet_options=""
+    (( ${LOGIN_GREETING_SLANTED_TEXT_DISABLED:=0} == 0 )) && login_greeting_figlet_options=("-f" "slant")
+    echo
+    figlet -c -t ${login_greeting_figlet_options[@]} "Hello $LOGIN_GREETING_NAME"
+    echo
+    unset login_greeting_figlet_options
+fi
 
 
 #-----------------------------------------------------------

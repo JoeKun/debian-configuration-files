@@ -1,4 +1,4 @@
-# Installing GitLab 5.0.0.beta1 on Debian GNU/kFreeBSD Wheezy
+# Installing GitLab 6.4.3 on Debian GNU/kFreeBSD Wheezy
 #
 # Created by Joel Lopes Da Silva on 3/18/13.
 # Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
@@ -22,7 +22,6 @@ aptitude update
 # System provided ruby seems much more stable and robust than custom ruby builds.
 aptitude install ruby ruby-dev
 gem install bundler
-gem install charlock_holmes --version '0.6.9'
 
 # Instead of adduser --disabled-login --gecos 'GitLab' git
 add_system_group git 120
@@ -40,19 +39,23 @@ ln -s /usr/bin/python2.7 python2
 # Installing libv8 tends to fail on Debian GNU/kFreeBSD AMD64.
 git clone https://github.com/cowboyd/libv8.git
 cd libv8
-git checkout -b 3.11-kfreebsd origin/3.11
+git checkout -b v3.16.14.3-kfreebsd v3.16.14.3
 patch -p1 -i /debian-configuration-files/documentation/gitlab/libv8-build-fix-Debian-GNU-kFreeBSD.diff
+git add patches/*
 git commit -a -m "Fix build for Debian GNU/kFreeBSD."
+bundle install
+bundle exec rake checkout
 gem build libv8.gemspec
-# Move libv8-3.11.8.17.gem to ~git/gitlab/vendor/bundle/ruby/1.9.1/cache/
+# Move libv8-3.16.14.3.gem to ~git/gitlab/vendor/bundle/ruby/1.9.1/cache/
 
 # We want postgresql, so, as git, in ~git/gitlab:
 cp config/database.yml.postgresql config/database.yml
 [...]
 bundle install --deployment --without development test mysql
 
-# Patch init script, from /etc/init.d
-patch -p1 -i /debian-configuration-files/documentation/gitlab/gitlab-5.1.0_init_script_load_bashrc_and_fix_home_directory_location.diff
+# Tweaking behavior of init script.
+cd /etc/default
+ln -s /debian-configuration-files/etc/default/gitlab
 
 # Instead of update-rc.d
 insserv --verbose gitlab

@@ -1,0 +1,8 @@
+# ~/.zshenv: Personal environment variables for zsh
+
+# Silent login.
+export ACCEPT_MESSAGES_FROM_OTHER_USERS_DISABLED=1
+export ECHO_SYSTEM_INFORMATION_UPON_LOGIN_DISABLED=1
+export LOGIN_GREETING_DISABLED=1
+export FORTUNE_UPON_LOGIN_DISABLED=1
+
