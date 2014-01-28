@@ -13,12 +13,21 @@ app_user="git"
 # The default is "/home/$app_user/gitlab"
 app_root="/var/lib/$app_user/gitlab"
 
-# These are defined in /etc/init.d/gitlab before the default file is 
-# included, thus with the old value of app_root; so we have to redefine 
-# them here.
+# pid_path defines a folder in which the gitlab and it's components place their pids.
+# This variable is also used below to define the relevant pids for the gitlab components.
+# The default is "$app_root/tmp/pids"
 pid_path="$app_root/tmp/pids"
+
+# socket_path defines the folder in which gitlab places the sockets
+#The default is "$app_root/tmp/sockets"
 socket_path="$app_root/tmp/sockets"
+
+# web_server_pid_path defines the path in which to create the pid file fo the web_server
+# The default is "$pid_path/unicorn.pid"
 web_server_pid_path="$pid_path/unicorn.pid"
+
+# sidekiq_pid_path defines the path in which to create the pid file for sidekiq
+# The default is "$pid_path/sidekiq.pid"
 sidekiq_pid_path="$pid_path/sidekiq.pid"
 
 # python2 is installed in the app user's home directory.

@@ -19,6 +19,9 @@
     ProxyPassReverse / http://127.0.0.1:8080/
     ProxyPreserveHost On
     
+    # Support for secured cookies
+    RequestHeader set X_FORWARDED_PROTO 'https'
+    
     # Log configuration
     <FilesMatch \.(jpg|gif|png)$>
         SetEnvIfNoCase Referer "^https://gitlab.foo.com/" local_referer=1
