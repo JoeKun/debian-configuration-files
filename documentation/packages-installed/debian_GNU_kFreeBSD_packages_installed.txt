@@ -29,6 +29,7 @@ aptitude install figlet fortune                 # for my shell login script
 
 # Communication clients
 aptitude install mutt
+aptitude install libsasl2-modules               # for SMTP authentication with Gmail in mutt
 aptitude install irssi
 
 # Ruby support (with AR+Sqlite3)
