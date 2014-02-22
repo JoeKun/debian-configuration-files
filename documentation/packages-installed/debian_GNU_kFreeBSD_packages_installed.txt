@@ -85,7 +85,7 @@ aptitude install mysql-server
 # phpMyAdmin
 aptitude install phpmyadmin
 
-# GitLab
+# GitLab/GitLab CI
 aptitude install libgdbm-dev libreadline-dev libffi-dev libcurl4-openssl-dev checkinstall libicu-dev
 aptitude install redis-server # from sid for kfreebsd-amd64
 aptitude install libpq-dev
