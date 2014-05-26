@@ -1,0 +1,5 @@
+[user]
+	name = GitLab CI
+	email = ci@foo.com
+[color]
+	ui = true
