@@ -3,4 +3,4 @@
 # Run integrity_check every day at 3:00 AM.
 
 # m h dom mon dow user  command
-0 3 * * * root bash -l -c "source ~root/.rvm/scripts/rvm ; rvm use 2.0.0@integrity_check > /dev/null ; integrity_check"
+0 3 * * * root bash -l -c "source ~root/.rvm/scripts/rvm ; rvm use 2.1.2@integrity_check > /dev/null ; integrity_check"
