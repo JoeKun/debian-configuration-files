@@ -1,7 +1,7 @@
 # Installing rvm as root in ~root/.rvm on Debian GNU/kFreeBSD Wheezy
 #
 # Created by Joel Lopes Da Silva on 3/18/13.
-# Copyright © 2013 Joel Lopes Da Silva. All rights reserved.
+# Copyright © 2013-2014 Joel Lopes Da Silva. All rights reserved.
 
 # Install
 cd ~root
@@ -10,7 +10,7 @@ curl -L https://get.rvm.io | bash -s stable
 rm -f /etc/rvmrc /etc/profile.d/rvm.sh 
 source "$HOME/.rvm/scripts/rvm"
 rvm autolibs read
-rvm install 2.0.0 --patch /debian-configuration-files/documentation/rvm/ruby-2.0.0-p0_missing_declarations_GNU_kFreeBSD.diff
+rvm install 2.1.3
 
 # System gemsets
 rvm gemset create integrity_check
