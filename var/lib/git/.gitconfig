@@ -1,0 +1,7 @@
+[user]
+	name = GitLab
+	email = gitlab@foo.com
+[color]
+	ui = true
+[core]
+	autocrlf = input
