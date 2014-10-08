@@ -90,6 +90,7 @@ aptitude install libgdbm-dev libreadline-dev libffi-dev libcurl4-openssl-dev che
 aptitude install redis-server # from sid for kfreebsd-amd64
 aptitude install libpq-dev
 aptitude install sudo
+aptitude install cmake
 
 # Subversion Server
 aptitude install libapache2-svn
