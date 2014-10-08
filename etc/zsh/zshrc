@@ -234,14 +234,6 @@ setopt hist_find_no_dups
 # RVM Support
 #-----------------------------------------------------------
 
-# Always pick single-user RVM installs over multi-user ones.
-if [[ -d "/usr/local/rvm" ]] && [[ ! -d "$HOME/.rvm" ]]
-then
-    export __RVM_INSTALL_PATH="/usr/local/rvm"
-else
-    export __RVM_INSTALL_PATH="$HOME/.rvm"
-fi
-
 # Clear stale rvm environment variables when rvm is not loaded and 
 # rvm_path is set but corresponds to some other user's home directory.
 # This tends to happen when using su, since by default, su preserves 
@@ -269,6 +261,14 @@ then
         fi
     done
     unset home_directory
+fi
+
+# Always pick single-user RVM installs over multi-user ones.
+if [[ -d "/usr/local/rvm" ]] && [[ ! -d "$HOME/.rvm" ]]
+then
+    export __RVM_INSTALL_PATH="/usr/local/rvm"
+else
+    export __RVM_INSTALL_PATH="$HOME/.rvm"
 fi
 
 # Load any user rvm configuration
