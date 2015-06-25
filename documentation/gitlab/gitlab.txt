@@ -39,14 +39,14 @@ ln -s /usr/bin/python2.7 python2
 # Installing libv8 tends to fail on Debian GNU/kFreeBSD AMD64.
 git clone https://github.com/cowboyd/libv8.git
 cd libv8
-git checkout -b v3.16.14.3-kfreebsd v3.16.14.3
+git checkout -b v3.16.14.7-kfreebsd v3.16.14.7
 patch -p1 -i /debian-configuration-files/documentation/gitlab/libv8-build-fix-Debian-GNU-kFreeBSD.diff
 git add patches/*
 git commit -a -m "Fix build for Debian GNU/kFreeBSD."
 bundle install
 bundle exec rake checkout
 gem build libv8.gemspec
-# Move libv8-3.16.14.3.gem to ~git/gitlab/vendor/bundle/ruby/1.9.1/cache/
+# Move libv8-3.16.14.7.gem to ~git/gitlab/vendor/bundle/ruby/2.1.0/cache/
 
 # We want postgresql, so, as git, in ~git/gitlab:
 cp config/database.yml.postgresql config/database.yml
