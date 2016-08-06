@@ -14,8 +14,8 @@ deb-src http://mirror.cc.columbia.edu/debian/ wheezy main contrib non-free
 # Security updates
 #-----------------------------------------------------------
 
-deb http://security.debian.org/ wheezy/updates main contrib non-free
-deb-src http://security.debian.org/ wheezy/updates main contrib non-free
+#deb http://security.debian.org/ wheezy/updates main contrib non-free
+#deb-src http://security.debian.org/ wheezy/updates main contrib non-free
 
 
 #-----------------------------------------------------------
