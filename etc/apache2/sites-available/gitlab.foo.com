@@ -13,14 +13,25 @@
     # Basic configuration
     ServerName gitlab.foo.com
     ServerAdmin gitlab@foo.com
+    AllowEncodedSlashes NoDecode
     
     # Proxy
     ProxyPass / http://127.0.0.1:8080/
     ProxyPassReverse / http://127.0.0.1:8080/
     ProxyPreserveHost On
-    
-    # Support for secured cookies
+
     RequestHeader set X_FORWARDED_PROTO 'https'
+    RequestHeader set X-Forwarded-Ssl on
+    
+    # Needed for downloading attachments.
+    DocumentRoot /var/lib/git/gitlab/public
+    
+    # Set up apache error documents, if back end goes down (i.e. 503 error) then a maintenance/deploy page is thrown up.
+    ErrorDocument 404 /404.html
+    ErrorDocument 422 /422.html
+    ErrorDocument 500 /500.html
+    ErrorDocument 502 /502.html
+    ErrorDocument 503 /503.html
     
     # Log configuration
     <FilesMatch \.(jpg|gif|png)$>
