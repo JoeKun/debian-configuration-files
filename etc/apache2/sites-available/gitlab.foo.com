@@ -16,9 +16,33 @@
     AllowEncodedSlashes NoDecode
     
     # Proxy
-    ProxyPass / http://127.0.0.1:8080/
-    ProxyPassReverse / http://127.0.0.1:8080/
     ProxyPreserveHost On
+    <Location />
+        Order deny,allow
+        Allow from all
+
+        # Allow forwarding to gitlab-git-http-server
+        ProxyPassReverse http://127.0.0.1:8181
+        # Allow forwarding to GitLab Rails app (Unicorn)
+        ProxyPassReverse http://127.0.0.1:8080
+        ProxyPassReverse https://gitlab.foo.com/
+    </Location>
+    
+    # Apache equivalent of nginx try files
+    # http://serverfault.com/questions/290784/what-is-apaches-equivalent-of-nginxs-try-files
+    # http://stackoverflow.com/questions/10954516/apache2-proxypass-for-rails-app-gitlab
+    RewriteEngine On
+
+    # Forward these requests to gitlab-git-http-server
+    RewriteCond %{REQUEST_URI} ^/[\w\.-]+/[\w\.-]+/repository/archive.* [OR]
+    RewriteCond %{REQUEST_URI} ^/api/v3/projects/.*/repository/archive.* [OR]
+    RewriteCond %{REQUEST_URI} ^/[\w\.-]+/[\w\.-]+/(info/refs|git-upload-pack|git-receive-pack)$
+    RewriteRule .* http://127.0.0.1:8181%{REQUEST_URI} [P,QSA]
+
+    # Forward any other requests to GitLab Rails app (Unicorn)
+    RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
+    RewriteCond %{REQUEST_URI} ^/uploads
+    RewriteRule .* http://127.0.0.1:8080%{REQUEST_URI} [P,QSA,NE]
 
     RequestHeader set X_FORWARDED_PROTO 'https'
     RequestHeader set X-Forwarded-Ssl on
