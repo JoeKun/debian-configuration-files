@@ -1,0 +1,63 @@
+diff --git a/misc/cgo/test/issue4029.go b/misc/cgo/test/issue4029.go
+index b0385eb..742b0d9 100644
+--- a/misc/cgo/test/issue4029.go
++++ b/misc/cgo/test/issue4029.go
+@@ -8,7 +8,7 @@ package cgotest
+ 
+ /*
+ #include <dlfcn.h>
+-#cgo linux LDFLAGS: -ldl
++#cgo freebsd LDFLAGS: -ldl
+ */
+ import "C"
+ 
+diff --git a/src/make.bash b/src/make.bash
+index fbc6f5d..ee0c294 100755
+--- a/src/make.bash
++++ b/src/make.bash
+@@ -102,7 +102,7 @@ done
+ # cmd/dist will detect kFreeBSD as freebsd/$GOARCH, but we need to
+ # disable cgo manually.
+ if [ "$(uname -s)" == "GNU/kFreeBSD" ]; then
+-        export CGO_ENABLED=0
++        export CGO_ENABLED=1
+ fi
+ 
+ # Clean old generated file that will cause problems in the build.
+diff --git a/src/run.bash b/src/run.bash
+index 5f20451..589afb0 100755
+--- a/src/run.bash
++++ b/src/run.bash
+@@ -162,19 +162,19 @@ esac
+ # Race detector only supported on Linux, FreeBSD and OS X,
+ # and only on amd64, and only when cgo is enabled.
+ # Delayed until here so we know whether to try external linking.
+-case "$GOHOSTOS-$GOOS-$GOARCH-$CGO_ENABLED" in
+-linux-linux-amd64-1 | freebsd-freebsd-amd64-1 | darwin-darwin-amd64-1)
+-	echo
+-	echo '# Testing race detector.'
+-	go test -race -i runtime/race flag os/exec
+-	go test -race -run=Output runtime/race
+-	go test -race -short flag os/exec
+-	
+-	# Test with external linking; see issue 9133.
+-	if [ "$extlink" = 1 ]; then
+-		go test -race -short -ldflags=-linkmode=external flag os/exec
+-	fi
+-esac
++#case "$GOHOSTOS-$GOOS-$GOARCH-$CGO_ENABLED" in
++#linux-linux-amd64-1 | freebsd-freebsd-amd64-1 | darwin-darwin-amd64-1)
++#	echo
++#	echo '# Testing race detector.'
++#	go test -race -i runtime/race flag os/exec
++#	go test -race -run=Output runtime/race
++#	go test -race -short flag os/exec
++#	
++#	# Test with external linking; see issue 9133.
++#	if [ "$extlink" = 1 ]; then
++#		go test -race -short -ldflags=-linkmode=external flag os/exec
++#	fi
++#esac
+ 
+ # This tests cgo -cdefs. That mode is not supported,
+ # so it's okay if it doesn't work on some systems.

@@ -1,0 +1,36 @@
+diff -ru a/netdb.h b/netdb.h
+--- a/netdb.h	2014-09-13 01:25:53.000000000 -0700
++++ b/netdb.h	2016-08-07 20:32:12.368686857 -0700
+@@ -613,6 +613,10 @@
+ 						STD3 rules.  */
+ # endif
+ # define AI_NUMERICSERV	0x0400	/* Don't use name resolution.  */
++// joellog: added AI_MASK
++#define AI_MASK \
++    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV | \
++    AI_ADDRCONFIG | AI_ALL | AI_V4MAPPED)
+ 
+ /* Error values for `getaddrinfo' function.  */
+ # define EAI_BADFLAGS	  -1	/* Invalid value for `ai_flags' field.  */
+diff -ru a/sys/signalvar.h b/sys/signalvar.h
+--- a/sys/signalvar.h	2014-03-22 09:13:43.000000000 -0700
++++ b/sys/signalvar.h	2016-08-07 20:23:35.455686265 -0700
+@@ -105,6 +105,8 @@
+  * get signal action for process and signal; currently only for current process
+  */
+ #define	SIGACTION(p, sig)	(p->p_sigacts->ps_sigact[_SIG_IDX(sig)])
++// joellog: added line
++#endif /* 0 */
+ 
+ #endif /* _KERNEL */
+ 
+@@ -212,7 +214,8 @@
+ 	union sigval sigev_value;	/* Signal value */
+ };
+ 
+-#endif
++// joellog: commented out
++//#endif
+ 
+ typedef struct ksiginfo {
+ 	TAILQ_ENTRY(ksiginfo)	ksi_link;
