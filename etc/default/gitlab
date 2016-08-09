@@ -36,7 +36,7 @@ gitlab_workhorse_pid_path="$pid_path/gitlab-workhorse.pid"
 # '-listenNetwork tcp -listenAddr localhost:8181'.
 # The -authBackend setting tells gitlab-workhorse where it can reach
 # Unicorn.
-gitlab_workhorse_options="-listenUmask 0 -listenNetwork tcp -listenAddr 127.0.0.1:8181 -authBackend http://127.0.0.1:8080"
+gitlab_workhorse_options="-listenUmask 0 -listenNetwork tcp -listenAddr localhost:8181 -authBackend http://localhost:8080 -documentRoot $app_root/public"
 gitlab_workhorse_log="$app_root/log/gitlab-workhorse.log"
 
 # mail_room_enabled specifies whether mail_room, which is used to process incoming email, is enabled.
