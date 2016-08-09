@@ -5,3 +5,5 @@
 	ui = true
 [core]
 	autocrlf = input
+[gc]
+	auto = 0
